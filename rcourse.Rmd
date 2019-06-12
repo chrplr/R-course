@@ -1,0 +1,1172 @@
+---
+title: "R Notebook"
+author: "Christophe Pallier"
+date: "6/7/2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Le langage R et son ecosystème
+
+Dans les années 1970-80, des chercheurs des Bell labs ont inventé un langage, **S**, pour permettre de faire de statistiques de manière interactive et plus efficace qu'en programmant en FORTRAN.
+
+**R** est une implémentation open-source de **S** développée dans les années 90.
+
+Le site officiel de **R** est <https://cran.r-project.org/>
+
+En plus du logiciel **R**, on peut trouver sur ce site de nombreuses documentations et des librairies (aka 'packages') qui ajoutent des fonctionnalités à R (Explorer les liens `Documentation` `Task View` dans le menu de la page d'acceuil du CRAN).
+
+---
+
+**Rstudio** est un environnement de développement (IDE) qui facilite l'utilisation de R. Il peut-être téléchargé depuis <http://www.rstudio.org>
+
+## Courte démo de Rstudio
+
+1. exécuter le code suivant dans la console:
+
+```{r}
+    data("AirPassengers")
+    str(AirPassengers)
+    ?AirPassengers
+    plot(AirPassengers)
+```
+
+Regarder les onglets `Plots` et `Global Environment`
+
+2. Créer des rapports en utilisant le format Rmarkdown. 
+
+Un fichier *Rmarkdown* (extension `Rmd`) contient des blocs de codes R (chunks) et du texte libre. A partir ce ce fichier, on peut générer un document html, pdf, etc... qui contient les texte formaté et le résultat des commandes R.
+
+Exemple:
+
+- Créer un projet avec ``File/New Projet``
+
+- cliquer sur `File/New File/Rmarkdown`
+
+- Supprimer de la ligne 8 jusqu'à la fin; puis cliquez sur `Insert/R` (ou `Ctrl-Atl-I`). Cela insère un _chunk_ de code.
+
+```{r}
+    data("ToothGrowth")
+    coplot(len ~ dose | supp, data = ToothGrowth, panel = panel.smooth,
+           xlab = "ToothGrowth data: length vs dose, given type of supplement")
+
+```
+
+   Pour plus d'info, consulter:
+
+   * <https://blog.wax-o.com/2014/04/tutoriel-un-guide-pour-bien-commencer-avec-markdown/>
+   * <https://kbroman.org/knitr_knutshell/pages/Rmarkdown.html>
+
+
+On trouve sur le site de rstudio de nombreuses antisèches bien utiles:
+<https://www.rstudio.com/resources/cheatsheets/>
+
+---
+           
+## Fondamentaux du langage
+
+### Exécution de code 
+
+En mode interactif (à la console): on entre une expression (ou une commande) qui est immédiatement évaluée (ou exécutée) dès qu'on appuie sur la touche 'Entrée'. 
+
+    
+     2 * pi  # expression
+     plot(sin(seq(-6,6,.1)))  # commande
+    
+
+On peut également exécuter du code R sauvé dans un fichier texte (extension `.R`) avec la commande `source('code.R', echo=TRUE)`. Remarque: on peut même exécuter un code qui se trouve sur Internet en passant une URL comme argument.
+
+Ou bien directement dans un Terminal avec `Rscript code.R`.
+    
+Pour compiler un document rmarkdown directement depuis le terminal (sans ouvrir rstudio): `R -e "rmarkdown::render('doc.Rmd')"`
+    
+
+### Objets de base de R
+
+#### Vecteurs 
+
+Dans R, à l'instar de MATLAB, il n'y pas  de distinction entre scalaire (nombre unique) et vecteur (le vecteur est un object de base, "atomic" de R) 
+
+Les éléments d'un vecteur doivent tous être du même type (numeric, character, logical, ...); Attention: R peut faire des conversions automatiques pour respecter cette règle.
+
+```{r}
+  1
+  1 + 3i
+  c(1, 3, 4, 2)
+  c('alpha', 'beta', 'gamma')
+  c(TRUE, FALSE, FALSE)
+  c(TRUE, 'FALSE')
+  c(1, "3")
+```
+
+```{r}
+   1 + 1
+   1 + NaN
+   1 + Inf
+   Inf / Inf
+   1:10
+   1:10 + 5
+   5 * (1:10)
+   1:10 + 100:109
+   1:10 + 1:2
+```
+
+Création de vecteurs:
+
+```{r}
+numeric(100)
+c(.3, .45, .1)
+c('alpha', 'beta', 'gamma')
+```
+
+On peut lire un vecteur à partir d'un fichier texte avec la fonction `scan`:
+
+```{r}
+write(rnorm(10), file='valeurs.dat')
+a = scan('valeurs.dat')
+print(a)
+
+b = scan('rcourse.Rmd', what=character())
+b[1:10]
+```
+
+Les fonctions `seq`, `rep` et `replicate` sont souvent utiles pour générer des vecteurs:
+
+```{r}
+seq(0, 1, .1)
+```
+
+
+```{r}
+rep(3.14, 5)
+```
+
+
+```{r}
+rep(c(1, 2), 3)
+```
+
+
+```{r}
+rep(c(1, 2), c(5, 5))
+```
+
+```{r}
+rep(c(1, 2), c(5, 3))
+```
+
+Génération de vecteurs aléatoires:
+
+```{r}
+runif(10, min=1, max=2)  # distribution uniforme
+rnorm(10, mean=100, sd=10)  # distribution normale
+?distributions  # autres distributions
+
+require(mvtnorm)  # distribtion multivariée
+X = rmvnorm(100, sigma=matrix(c(2,1,1,2), 2, 2))
+plot(X)
+
+sample(c('pile', 'face', 'tranche'), 1000, replace=T, prob=c(.49, .49, 0.02))
+```
+
+`replicate(n, expr)` évalue `n` fois l'expression `expr` et renvoit les valeurs obtenues dans un vecteur: 
+
+```{r}
+replicate(100, rnorm(1))  # mais on peut faire plus simple: rnorm(100)
+
+replicate(100, mean(sample(c(0, 0, 1), 10, replace=T)))
+barplot(table(replicate(1000, mean(sample(c(0, 0, 1), 10, replace=T)))))
+```
+
+**Exercices**:
+
+- créer le vecteur 1 2 2 3 3 3 4 4 4 4 5 5 5 5 5 ... 100
+
+
+#### noms
+
+On peut attribuer des _noms_ aux éléments d'un vecteur, qui peuvent servir ensuite à accéder à ces éléments.
+
+```{r}
+c(a=1, b=2)
+
+    c(nom='dupont', age=34)
+    a = c(nom='dupont', age=34)
+    a['nom']
+```
+
+Pour obtenir la liste des noms d'un vecteur, on utilise la fonction `names`:
+
+```{r}
+tirages = sample(c('pile', 'face'), 10, replace=T)
+resultats = table(tirages)
+resultats
+names(resultats)
+```
+
+
+Note: le même nom peut-être ré-utilisé (mais ce n'est pas forcément une bonne idée!)
+
+```{r}
+b = c(a=1, a=2, b=3)
+print(b)
+names(b)
+b['a']
+b[names(b)=='a']
+```
+
+### accès aux éléments d'un vecteur
+
+
+Il y a trois manières d'accéder aux éléments d'un vecteur:
+
+- par indice numérique de position
+- par noms
+- par filtre logique
+
+
+Accès par indice:
+
+```{r}
+ a = rnorm(100)
+ a
+ a[10]  # 10e element
+ a[10:19]
+ a[-(1:10)]  # supprime les 10iers éléments
+```
+
+
+Accès par nom:
+
+```{r}
+a = table(tirages)
+a['pile']
+```
+
+Accès par filtrage:
+
+```{r}
+  x = rnorm(20)
+  x
+  x > 0
+  x[x>0]
+```
+
+Quelques fonctions utiles: `length`, `sum`, `mean`, `summary`, `unique`, `table`, `sapply`...
+
+```{r}
+x = rnorm(10)
+length(x)
+sum(x)
+mean(x)
+summary(x)
+quantile(rnorm(100), c(.975, .995))
+```
+
+```{r}
+tirages = sample(c('pile', 'face'), 10, replace=T)
+unique(tirages)
+table(tirages)
+```
+
+`sapply` permet d'appliquer une fonction à tous les éléments d'un vecteur:
+
+```{r}
+sapply(1:10, function(x) x + 2)
+sapply(c('alpha', 'beta', 'delta') , nchar)
+```
+
+On s'en sert raremement car on peut remplacer le code ci dessus par:
+
+```{r}
+plus2 = function(x) x + 2 
+plus2(1:10)
+
+nchar(c('alpha', 'beta', 'delta'))
+```
+
+On peut utiliser `for` pour itérer sur les éléments d'un vecteur:
+
+```{r}
+for (x in sample(c('a', 'b'), 10, replace=T)) print(x)
+```
+
+Mais il est assez rare que cela soit nécessaire car on peut appliquer directement les fonctions à des vecteurs. Les boucles servent surtout quand on doit appliquer des commandes sur des sous ensembles de données (p.ex. des commandes graphiques**.
+
+
+
+**Exercices:**
+
+- calculer la somme de 1000 premiers nombres entiers
+- calculer factorielle de 20
+- calculer la proportion d'éléments négatifs dans un vecteur.
+- étant donné deux vecteurs de chaines de caractères, retourner combien de chaines sont identiques (et à la même position)  dans les deux vecteurs.
+- Etant donné un fichier texte (par ex. `rcourse.Rmd`), calculer le nombre de mots distinct qu'il contient, et pour chacun de ces mots, sa fréquence d'occurence dans le fichier. 
+- ecrire un programme qui calcule les termes de la suite logistique (voir <https://fr.wikipedia.org/wiki/Suite_logistique>)
+- ecrire un programme qui calcule par test de permutation, la p-value de la différence entre les echantillons c(156, 168, 164, 170, 158, 173) et c(166, 172, 180, 178, 176)
+- ecrire un programme qui affiche le triangle de Pascal
+
+
+#### fonctions portant sur les chaines de charactères
+
+```{r}
+labels = paste('sub', 1:20, sep='-')
+substr(labels, 5, 6)
+```
+
+* Substitution de sous-chaines:
+
+   ```{r}
+   gsub('sub-', 'participant#', labels)
+   ```
+
+   Remarque: Le premier argument de `gsub` peut être une expression regulière (voir <http://www.lexique.org/?page_id=101>)
+
+* Padding de nombres:
+
+   ```{r}
+   labels2 = sprintf("sub-%02d", 1:20)  # padding
+   ```
+
+   Voir <https://www.gastonsanchez.com/r4strings/c-style-formatting.html>
+
+
+#### Matrices et arrays
+
+Pour faire de l'algèbre linéaire avec R, on peut créer des matrices:
+
+```{r}
+matrix(c(1, 2, 3, 4, 5, 6), nrow=2)
+matrix(c(1, 2, 3, 4, 5, 6), nrow=2, byrow=T)
+```
+
+```{r}
+a = matrix(c(1, 2, 3, 4, 5, 6), nrow=3)
+a
+b = c(1, 2)
+b
+a %*% b  # produit de la matrice a par le vecteur b
+```
+
+Par exemple, l'équation normale pour résoudre les moindres carrés: $\hat{\beta} = (X^T X)^{-1} X^T y$
+
+
+```{r}
+y = rnorm(10)
+x1 = rnorm(10)
+x2 = rnorm(10)
+X = cbind(x1, x2)  # cbind="column bind"
+
+require(MASS)  # for ginv
+beta = ginv(t(X) %*% X) %*% t(X) %*% y
+beta
+
+# comparison avec le resultat obtenu par la fonction `lm`
+lm(y ~ X - 1)
+```
+
+
+Application d'une fonction aux vecteurs lignes ou aux vecteurs colonnes:
+
+```{r}
+apply(a, 1, mean)
+apply(a, 2, mean)
+```
+
+Supprimer la moyenne de chaque ligne ou colonne d'un tableau: 
+
+```{r}
+(a= matrix(1:10, ncol=2))
+rowmeans = apply(a, 1, mean)
+sweep(a, 1, rowmeans)
+```
+
+
+Exercice: Ecrire une fonction qui renvoit le nombre d'élements négatifs sur chaque ligne d'une matrice.
+
+Les _arrays_ sont des tableaux multidimensionnels.
+
+
+
+
+```{r}
+x =array(c(-0.93, 0.39, 0.88, 0.63, 0.86, -0.69, 1.02, 0.29, 0.94, 
+           0.93, -0.01, 0.79, 0.32, 0.14, 0.13, -0.07, -0.63, 0.26, 0.07, 0.87,
+           -0.36, 1.043, 0.33, -0.12, -0.055, 0.07, 0.67, 0.48, 0.002, 0.008, 
+           -0.19, -1.39, 0.98, 0.43, -0.02, -0.15,-0.08, 0.74, 0.96, 0.44, -0.005,
+           1.09, 0.36, 0.04, 0.09, 0.17, 0.68, 0.51, 0.09, 0.12, -0.05, 0.11,
+           0.99, 0.62, 0.13, 0.06, 0.27, 0.74, 0.96, 0.45),
+         dim=c(5, 2, 2, 3),
+         dimnames = list(Subject = c("s1", "s2", "s3", "s4", "s5"),
+                         Cond = c("A", "B"),
+                         Item = c("1", "2"),
+                         Measure = c("Measure1", "Measure2", "Measure3")))
+
+x[,"A","2",]
+
+```
+
+
+```{r}
+data("UCBAdmissions")
+?UCBAdmissions
+UCBAdmissions
+dimnames(UCBAdmissions)
+UCBAdmissions[,,'A']
+UCBAdmissions[,'Male',]
+ftable(UCBAdmissions)
+```
+
+
+Ma recommendation: éviter autant que possible les tableaux multidimensionnels et leur préferer les data.frame (ou leur version moderne: les tibbles). Les data.frames sont plus flexibles et R offre des fonctions "puissantes" pour les manipuler.  
+
+
+#### Listes
+
+R fournit un autre type d'objet, les _listes_, qui peuvent contenir n'importe quel type d'objet R. 
+
+```{r}
+     test = list(a="alpha", b="beta")
+     print(test)
+     print(test$a)  # on peut acceder aux elements d'un liste avec l'operateur $
+     print(test$b)
+     test[[1]]      # ou l'operateur [[
+     test[[2]]
+     test[1]    # renvoit une liste
+     test[2]
+```
+
+
+Certaines fonctions de R renvoient des listes et il est utile de savoit extraire de l'information de celles-ci. Par exemple, pour la fonction `t.test` renvoit un objet de class "htest" qui contient une liste:
+
+```{r}
+h = t.test(rnorm(10, mean=0), rnorm(10, mean=1))
+names(h)
+h$p.value
+```
+
+
+Les fonctions `lapply` et `sapply` correspondent à la fonction `map` des languages fonctionnels: elles appliquent une fonction à tous les élements d'une liste (ou d'un vecteur). `lapply` renvoit une liste, `sapply` renvoit un vecteur.
+
+```{r}
+  lapply(list(1:10, c('a', 'b')), 
+         length)
+   sapply(list(1:10, c('a', 'b')), 
+         length)
+```
+
+
+On peut également utiliser or `for` pour itérer sur les éléments d'une liste:
+
+```{r}
+for (elt in test) print(elt)  
+```
+
+Les listes sont plus flexibles (par exemple, on peut avoir des listes de listes de différentes longueur), mais un peu moins performantes que les vecteurs du point de vue du temps d'accès.
+
+les listes sont utiles pour décrire des arbres car elles ont naturellement une structure récursive.
+
+* Remarque: Tous les éléments qu'on manipule dans R sont des _objets_ et appartiennent à une _classe_ (La classe d'un objet définit les données qu'il contient et les fonctions qu'on peut lui appliquer).
+
+```{r}
+    class(4)
+    class(c(4, 5)) 
+    class(1 + 5i)
+    class('bonjour')
+    class(c(TRUE, FALSE))
+    class(function (x) x + 1)
+    class(list(1:4))
+    a = 'bonjour'
+    class(a)
+    
+```
+
+
+* Conversion de type 
+
+```{r}
+    as.numeric( c('45', '6.7') )
+    as.numeric( c(TRUE, FALSE) )
+    as.numeric( as.logical(c('T', 'F')))
+```
+
+
+## Variables
+
+
+* les objets peuvent être "sauvés" dans des variables avec les opérateurs d'affectation `=`, `<-` et `->`
+
+```{r}
+   b <- 1:10
+   b -> c
+   c
+```
+
+Les noms de variables sont en fait des "pointeurs" vers les objets R stockés dans le workspace. 
+
+```{r}
+myfunc <- function (x) { x + 1 }
+```
+
+
+Les opérateurs d'assignation font des copies des données:
+
+```{r}
+a = 1:10
+b = a
+a = "alpha"
+b
+```
+
+
+Remarque: Les caractères autorisés dans les noms de variables sont les lettres, les chiffres (sauf en position initiale) et les caractères '.' et '_'. Eviter d'utiliser comme nom de variables des fonctions ou constantes du langage (`mean`, `T`, `c`...).
+
+
+* Les variables sont créées dans un workspace (aka Environnement), par défaut le *Global Workspace*. les commandes `ls()`, `rm()` permettent de lister ou supprimer des variables. Le contenu d'une variable peux être inspecté avec la fonction `str()`.
+
+
+## facteurs
+
+* Un facteur est un vecteur d'un type particulier qui sert à représenter des variables catégorielles. Les labels des catégories, ou modalités, ou niveaux sont appellés "levels". 
+
+```{r}
+    country = factor(c('FR', 'FR', 'FR', 'UK', 'UK', 'GE'))
+    country
+    levels(country)
+```
+
+Un facteur peut être ordonné ou non, cela influe sur les codage utilisé dans les modèles linéaires.
+
+```{r}
+country = factor(c('FR', 'FR', 'FR', 'UK', 'UK', 'GE'))
+contrasts(country)
+```
+
+
+```{r}
+ordered(country)
+contrasts(ordered(country))
+```
+
+On a parfois besoin de modifier la modalité de réference:
+
+```{r}
+country = factor(c('FR', 'FR', 'FR', 'UK', 'UK', 'GE'))
+country = relevel(country, 'UK')
+contrasts(country)
+
+```
+
+Dans un modèle linéraire, il est crucial bien savoir si une variable a été déclarée comme facteur ou non:
+
+
+```{r}
+y = rnorm(20)
+x = rep(1:4, 5)
+anova(lm(y ~ x))
+
+x = factor(x)
+anova(lm(y ~ x))
+```
+
+#### Effectuer des opérations dans des sous-groupes définis par des facteurs: `tapply` et `aggregate`
+
+
+```{r}
+data("ToothGrowth")
+str(ToothGrowth)  # NB: ToothGrowth est un `data.frame` càa un liste de vecterus de même longueur
+
+tapply(ToothGrowth$len, ToothGrowth$supp, mean)
+tapply(ToothGrowth$len, ToothGrowth$supp, length)
+tapply(ToothGrowth$len, ToothGrowth$supp, sd)
+
+tapply(ToothGrowth$len, list(ToothGrowth$supp, ToothGrowth$dose), mean)
+tapply(ToothGrowth$len, list(ToothGrowth$supp, ToothGrowth$dose), length)
+tapply(ToothGrowth$len, list(ToothGrowth$supp, ToothGrowth$dose), sd)
+
+```
+
+
+Remarque: tapply renvoit un array qui a autant de dimension que de nombre de facteurs passés dans le second arguments. Un fonction similaire, la fonction `aggregate` renvoit un data.frame plutôt qu'un array.
+
+```{r}
+aggregate(ToothGrowth$len, list(supp=ToothGrowth$supp, dose=ToothGrowth$dose), mean)
+```
+
+
+Mentionnons egalement la fonction `xtabs` qui permet d'utiliser des formules et renvoit un array:
+
+```{r}
+xtabs(len ~ supp + dose, data=ToothGrowth)
+xtabs(len ~ ., data=ToothGrowth)
+```
+
+
+## Data.frames
+
+un _data.frame_ n'est rien d'autre qu'une liste de vecteurs qui ont tous la même longueur.
+C'est la représentation « naturelle » pour un tableau de données bidimensionnel (observations en ligne, variables en colonnes).
+
+
+```{r}
+df = data.frame(sub=rep(1:10, each=5), 
+                group=rep(1:2, each=25), 
+                data=rnorm(50))
+df
+```
+
+#### importation et exportation de données.
+
+Pour importer des données depuis un fichier texte dans un vecteur, on peut utiliser la fonction `scan()`. Pour le sauver, on utilise `write()`. 
+
+La fonction `readLines()` permet de lire un fichier texte ligne par ligne.
+
+Pour importer un tableau dans un `data.frame`, à partir d'un fichier texte, on utilise classiquement  les fonctions `read.table()`, `read.csv()`, `read.csv2()`... Les arguments les plus utiles sont `header` et `sep`. Pur les ecrire `write.table()`, `write.csv()`.
+
+Sous Windows, Si on a copié un tableau excel dans le presse-papier, on peut l'importer dans R avec 
+
+     my_data <- read.table(file = "clipboard", 
+                           sep = "\t", header=TRUE)
+                           
+                           
+Le package [readxl](https://readxl.tidyverse.org/) fournit une fonction `read_excel()` pour lire les fichiers `.xls` et `.xlsx`.
+
+Pour importer des données sauvées dans des formats binaires d'autres logiciels (SAS, Stata, SPSS, ...), consulter le manuel `R Help/R Data Import/Export`.
+
+Remarque: En R, tout objet, notamment un data.frame, peut être sauvé comme un fichier binaire avec `saveRDS`, et relu avec `readRDS`.
+
+```{r}
+uslex = read.table('http://www.lexique.org/databases/SUBTLEX-US/SUBTLEXus74286wordstextversion.tsv', header=TRUE, sep='\t')
+
+saveRDS(uslex, file='uslex.Rds')
+rm(uslex)
+
+lex = readRDS('uslex.Rds')
+```
+
+
+Remarques:
+
+* il existe également des fonctions `load` et `save` qui permettent de sauver des objects R (des workspaces en fait), mais je déconseille leur emploi car le nom de variables est "caché" à l'intérieur des fichiers de données ce qui rend les scripts difficiles à débugger.
+
+* Les noms de fichiers sont fournit relativement au rerpertoire de travail courant: `getwd()` et `setwd()`
+
+* Les fonctions `dir()` et `Sys.glob()` permettent de lister des fichiers du repertoire courant. Sys.glob permet de se restreinte aux fichier dont le nom respecte un pattern. 
+
+* Pour les fichiers csv très larges, la performance de `read.table` n'est pas excellente.
+  Une version plus moderne et efficace (10x plus rapide) est `readr:read_table` et ses dérivés (`read_csv` `read_tsv`, ...)
+
+    ```{r}
+    require(readr)
+    uslex = read_tsv('http://www.lexique.org/databases/SUBTLEX-US/SUBTLEXus74286wordstextversion.tsv')
+    str(uslex)
+    ```
+
+  Le résultat est un `tibble` plutôt qu'un `data.frame` (voir <https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html> et plus généralement le package `tidyverse`).
+
+
+
+Exercice: Etant donné un ensemble de fichiers 'frais*csv' dans le repertoire courant, calculer la somme globale de la colonne 'depenses' à travers tous ces fichiers.
+
+
+### Manipulation des data.frames
+
+#### Accès aux variables
+
+Un data.frame `df` étant une liste, on peut accéder aux "colonnes" avec la syntaxe `df$nom_de_colonne`.
+
+En fait, on peut éviter de devoir écrire `df$` avec:
+
+    attach(df)
+    ... code
+    detach()
+
+ou avec
+
+    with(df, { code })
+
+à l'intérieur du code, on peut utiliser directement les noms des variables du data.frame, mais il faut faire très attention aux conflits potentiels avec les variables du workspace !
+
+
+```{r}
+rm(x)
+df = data.frame(x = 1:10)
+attach(df)
+print(x)
+detach()
+
+x = "alpha"
+attach(df)
+print(x)
+detach()
+```
+
+C'est pourquoi il faut mieux utiliser `with` que `attach` et `detach`:
+
+```{r}
+x = "alpha"
+with(df, print(x))
+```
+
+
+### Recodage de variables
+
+
+   ifelse(expr, val_if_true, val_if_false)
+  
+```{r}
+x = rnorm(100)
+ifelse(x>0, "positif", "negatif")
+```
+
+
+   cut()  #  transofmr un variable continue en variables discontiue par intervalles.
+   
+
+```{r}
+x = runif(50, min =0, max=100)
+cut(x, breaks=seq(0, 100, 10))
+```
+
+
+   car::recode
+   
+```{r}
+library(car)
+example(recode)
+```
+   
+
+
+#### La fonction `subset` 
+
+    subset(df, subset, select)	
+
+    df: datad.frame  to be subsetted.
+    subset: logical expression indicating rows to keep
+    select: expression, indicating columns to keep.
+
+Essayer: 
+
+    example(subset)
+
+
+
+#### la fonction rbind (row bind)
+
+Combine les lignes des deux data.frame (qui doivent avoir les même colonnes)
+
+
+```{r}
+d1 = data.frame(a=1, b=1:2, y=rnorm(6))
+d2 = data.frame(a=2, b=1:2, y=rnorm(6))
+(d3 = rbind(d1, d2))
+```
+
+Exercice: supposons que vous ayez un répertoire contenant 50 fichiers `data*.csv` ayant le même format. Comment remplir un unique data.frame avec le contenu de tous ces fichiers? 
+
+
+#### La fonction merge
+
+`merge` réalise une jointure entre deux data.frames:
+
+```{r}
+codes = c('ab43', 'cf11', '8a45')
+(tab1 = data.frame(codes, age=c(45, 56, 37)))
+(tab2 = data.frame(codes, mesure=rnorm(12)))
+(jointable = merge(tab1, tab2))
+```
+
+
+# Graphiques
+
+
+En plus des graphiques de base, et des libraries 'lattice' et 'ggplot2', il existe de nombreuses autres librairies graphiques
+<http://the-r.kr/2018/05/20/9-useful-r-data-visualization-libraries-for-any-discipline/>
+
+
+Voisr <https://www.r-graph-gallery.com>
+
+Un livre fort utile est _R graphics cookbook_ par Winston Chang
+
+
+## Graphiques "de base" 
+
+
+### afficher des fonctions ou des variables
+
+```{r}
+x = seq(0, 4*pi, by=.1)
+y = sin(x)
+plot(x, y)
+```
+
+```{r}
+plot(x, y, type='l', col='blue', bty='l', xlab='t', ylab='sin(t)', main='Fonction sinus', las=1)
+grid()
+```
+
+
+On peut afficher des données:
+
+```{r}
+data("AirPassengers")
+plot(AirPassengers)
+```
+
+```{r}
+data("AirPassengers")
+t = 1:144
+y = as.vector(AirPassengers)
+plot(t, y)
+abline(lm(y ~ t), col='blue')
+```
+
+
+Afficher plusieurs fonctions:
+
+```{r}
+plot(x, sin(x), col='blue', type='l', las=1)
+lines(x, cos(x), col='red')
+```
+
+Pour afficher plusieurs graphiques sur la même page, on utilise le parametre mfrow.
+
+```{r}
+opar = par(no.readonly = T) # sauve les parametres graphiques
+par(mfrow=c(1, 2)) # 1 ligne, 2 colonnes
+plot(x, sin(x), type='l')
+plot(x, cos(x), type='l')
+par(opar) # restaure les anciens parametres graphiques
+```
+
+
+
+Afficher les vecteurs colonnes d'une matrice sur des courbes différentes:
+
+```{r}
+X = matrix(rnorm(100), 25, 4)
+matplot(1:nrow(X), X, type='l', lty=1, las=1)
+legend("topright", legend=c('a','b','c','d'), fill=1:4)
+```
+
+```{r}
+image(x=1:nrow(X), y=1:ncol(X), X, col=gray.colors(10), las=1)
+```
+
+Exercice: afficher les données AirPassengers avec chaque année sur une courbe séparée.
+
+
+
+#### Afficher les relations 2 à 2 entre des variables :
+
+
+```{r}
+pairs(X)
+```
+
+
+```{r}
+data(mtcars) 
+pairs(subset(mtcars, select=c('mpg','cyl','disp','hp')))
+```
+
+Entre des variables catégorielles:
+
+```{r}
+data("HairEyeColor")
+(HairEyeColor)
+mosaicplot(HairEyeColor)
+```
+
+Exercice: Faire deux graphiques distincts pour les hommes et pour les femmes.
+
+
+### Afficher des distributions:
+
+```{r}
+x = rnorm(100)
+boxplot(x)
+hist(x)
+plot(density(x))
+rug(x)
+```
+
+
+```{r}
+boxplot(len ~ supp + dose, data=ToothGrowth)
+```
+
+
+
+```{r}
+library(vioplot)
+vioplot(len ~ supp + dose, data=ToothGrowth)
+```
+
+
+
+# dotplots
+
+```{r}
+with(ToothGrowth,
+     dotchart(len, group=dose))
+```
+
+
+```{r}
+with(ToothGrowth,
+     stripchart(len, method='jitter', vertical=T, pch=16, cex=.8)
+)
+```
+
+
+#### Diagrammes en bâtons
+
+```{r}
+barplot(c(4, 5, 2), las=1, main='exemple de diagramme en bâtons')
+```
+
+```{r}
+hec = data.frame(HairEyeColor)
+barplot(xtabs(Freq ~ Eye + Hair, data=hec), xlab= 'Hair color', legend=T, las=1)
+barplot(xtabs(Freq ~ Eye + Hair, data=hec), xlab= 'Hair color', legend=T, las=1, beside=T)
+
+```
+
+Ajouter des barres d'erreurs.
+
+```{r}
+x = rnorm(100, mean=5, sd=2)
+categ = gl(4, 25)
+means = tapply(x, categ, mean)
+mp = barplot(means, ylim=c(0, 10), las=1)
+se = tapply(x, categ, function (x) { sd(x)/sqrt(length(x)) })
+arrows(mp, means - se, mp, means + se, code=3, angle=90)
+```
+
+
+
+
+#### sauvegarder les graphiques dans des fichiers images:
+
+
+```{r}
+png('sinus.png')
+plot(x, sin(x))
+graphics.off()
+```
+
+```{r}
+pdf('sinus.pdf')
+plot(x, sin(x))
+graphics.off()
+```
+
+Le format `svg` est intéressant si l'on veut retoucher le résultat avec uin logiciel comme inkscape.
+
+```{r}
+svg('sinus.svg')
+plot(x, sin(x))
+graphics.off()
+```
+
+## treillis (lattice)
+
+```{r}
+library(lattice)
+```
+
+
+From <https://www.statmethods.net/advgraphs/trellis.html>:
+
+```{r}
+library(lattice)
+data("mtcars")
+attach(mtcars)
+
+
+# create factors with value labels
+gear.f<-factor(gear, levels=c(3, 4, 5),
+   labels=c("3gears","4gears","5gears"))
+cyl.f <-factor(cyl,levels=c(4, 6, 8),
+   labels=c("4cyl","6cyl","8cyl"))
+
+# kernel density plot
+densityplot(~ mpg,
+   main="Density Plot",
+   xlab="Miles per Gallon")
+
+# kernel density plots by factor level
+densityplot(~ mpg | cyl.f,
+   main="Density Plot by Number of Cylinders",
+   xlab="Miles per Gallon")
+
+# kernel density plots by factor level (alternate layout)
+densityplot(~ mpg | cyl.f,
+   main="Density Plot by Numer of Cylinders",
+   xlab="Miles per Gallon",
+   layout=c(1,3))
+
+# boxplots for each combination of two factors
+bwplot(cyl.f ~ mpg | gear.f,
+   ylab="Cylinders", xlab="Miles per Gallon",
+   main="Mileage by Cylinders and Gears",
+   layout=(c(1,3)))
+
+# scatterplots for each combination of two factors
+xyplot(mpg ~ wt | cyl.f * gear.f,
+   main="Scatterplots by Cylinders and Gears",
+   ylab="Miles per Gallon", xlab="Car Weight")
+
+# 3d scatterplot by factor level
+cloud(mpg ~ wt * qsec | cyl.f,
+   main="3D Scatterplot by Cylinders")
+
+# dotplot for each combination of two factors
+dotplot(cyl.f ~ mpg | gear.f,
+   main="Dotplot Plot by Number of Gears and Cylinders",
+   xlab="Miles Per Gallon")
+
+# scatterplot matrix
+splom(mtcars[c(1,3,4,5,6)],
+   main="MTCARS Data")
+
+detach()
+```
+
+Voir <http://lmdvr.r-forge.r-project.org/figures/figures.html>
+
+## ggplot2
+
+```{r}
+library(ggplot2)
+```
+
+
+ggplot2 est une librairie graphique plus récente. Permet de faire des graphiques esthétiques, mais plus difficile à controler finement qu'avec graphics ou lattice.
+
+
+<https://ggplot2.tidyverse.org/reference/>
+
+
+Livre: _Applied Data Visualization with R and ggplot2_  (<https://github.com/TrainingByPackt/Applied-Data-Visualization-with-R-and-ggplot2>)
+
+
+#### qplot
+
+```{r}
+require(ggplot2)
+data(cars)
+qplot(speed, dist, data=cars)
+```
+
+```{r}
+data(iris)
+qplot(Petal.Width, Petal.Length, color = Species, data=iris)
+```
+
+
+```{r}
+data(iris)
+qplot(Species, Petal.Length, geom='boxplot', data=iris)
+```
+
+```{r}
+data(iris)
+ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(width=0.1, height=0.1)
+```
+
+
+
+
+### More documentations on graphics
+
+* Comparaison lattice vs. ggplot2:
+
+  * <http://motioninsocial.com/tufte/>
+
+  * <https://www.stat.ubc.ca/~jenny/STAT545A/block18_gapminderGgplot2VsLattice.html>
+
+   * <https://learnr.wordpress.com/2009/06/28/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-1/>
+
+   * <https://learnr.wordpress.com/2009/06/29/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-2/>
+
+   * <https://learnr.wordpress.com/2009/07/02/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-3/>
+
+   * <https://learnr.wordpress.com/2009/07/02/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-4/>
+
+   * <https://learnr.wordpress.com/2009/07/15/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-5/>
+
+   * <https://learnr.wordpress.com/2009/07/20/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-6/>
+
+   * <https://learnr.wordpress.com/2009/07/27/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-7/>
+
+   * <https://learnr.wordpress.com/2009/08/03/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-8/>
+
+   * <https://learnr.wordpress.com/2009/08/26/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-final-part/>
+
+
+
+# Linear models & Anova
+
+
+```{r}
+data(cars)
+str(cars)
+with(cars, { plot(speed, dist, bty='l')} )
+mod = lm(dist ~ speed, data=cars)
+summary(mod)
+abline(mod, col='blue')
+# identify(cars$speed, cars$dist, 1:nrow(cars))
+```
+
+
+
+```{r}
+x1 = runif(20)
+x2 = runif(20)
+y = rnorm(20) + 0.2 * x1 - .5 * x2
+
+pairs(cbind(x1, x2, y))
+
+regression = lm(y ~ x1 + x2)
+print(regression)
+summary(regression)
+```
+
+
+Pour réaliser une Analyse de Variance, on peut utiliser la fonction `aov()`, ou la fonction `ezANOVA()` du package `ez`.
+
+
+
+
+# Cross-validation 
+
+
+Exercice: Etant donné un ensemble de données (X, y), lé découper en ensembles d'entrainement et de test, estimer les parametres du modèle sur les données d'entrainement, puis calculer la qualité du fit des données prédite par rapport aux données observées dans l'ensemble de tests.
+
+
+Note:Le package `caret` permet d'automatiser la cross-validation : http://www.sthda.com/english/articles/38-regression-model-validation/157-cross-validation-essentials-in-r/
+
+
+# tidyverse
+
+tidyverse <https://www.tidyverse.org/> rassemble divers packages qui essaye de "rationnaliser" certaines aspects de R.
+
+Entre autre:
+
+- [ggplot2](https://ggplot2.tidyverse.org/)
+- [maggrit](https://magrittr.tidyverse.org/)
+- [dplyr](https://dplyr.tidyverse.org/)
+
+
+Des exemples sont présentés livre [R for Data Science](<https://r4ds.had.co.nz/>)
+
+Par exemple, voir <https://r4ds.had.co.nz/pipes.html> pour les pipes.
+
+
+# Web scrapping
+
+package `rvest`: https://getpocket.com/a/read/1671226858

@@ -1,0 +1,969 @@
+-------------------------------------------------------------------------------
+title: "Basic data analyses with R"
+author: "Christophe Pallier"
+date: "6/12/2019"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+-------------------------------------------------------------------------------
+
+# Comparing two proportions (binary response) #
+
+
+A binary variable `resp` has been measured in two independent groups (no matching). 
+
+We therefore have four counts.
+
+We first put them into a table. 
+
+```{r}
+dat <- as.table(matrix(c(40, 20, 
+                         50, 40), 
+                       nrow=2, 
+                       byrow=T,
+                       dimnames=list(group=c('Gr1', 'Gr2'), 
+                                    resp=0:1)))
+dat
+```
+
+Note: There may a better/simpler way to create a table... If you know one, please let me know.
+
+Now we can obtain the proportions in each group:
+```{r}
+signif(prop.table(dat, 1), 2)
+```
+
+And plot the table:
+
+```{r}
+plot(dat)
+```
+
+If you do not like the mosaicplot, you can use a barplot
+
+```{r}
+barplot(prop.table(dat[,1]), ylim=c(0,1))
+```
+
+
+Then we compute inferential stats to see if we can reject the null hypothesis that the two samples come from populations with identical proportions. 
+
+If no cell is less than 5, a Pearson's $\Chi^2$ test will do. There are many 
+ways to perform it:
+
+```{r}
+chisq.test(dat)
+prop.test(dat)
+
+```
+
+```{r}
+require(gmodels)
+CrossTable(dat, chisq=TRUE)
+```
+
+
+# Estimation - Confidence intervals #
+
+
+
+Here, we just show how to get confidence intervals for the proportion or the mean obtained from a sample. For confidence intervalle of comparisons, see the other files.
+
+## Estimating a proportion ##
+
+```{r simulbinom}
+n <- 100
+a <- rbinom(n, size=1, prob=1/3)
+```
+
+```{r tabulate}
+table(a)
+prop.table(table(a))
+mean(a)
+```
+
+### Inferential stats ###
+
+```{r propci}
+prop.test(table(a))
+prop.test(table(a))$conf.int
+```
+
+
+## Estimating a mean ##
+
+```{r simul}
+n <- 100
+a <- rnorm(n, mean=100, sd=15)
+```
+
+
+## Exploratory graphics ##
+
+```{r}
+par(las=1)
+stripchart(a, method='jitter', vertical=TRUE)
+abline(h=mean(a), lty=2)
+boxplot(a)
+hist(a)
+rug(a)
+plot(density(a))
+abline(v=mean(a), lty=2)
+rug(a)
+```
+
+If the sample is small, you can use a `dotchart`
+
+```{r}
+dotchart(a[1:20])
+```
+
+
+## Descriptive stats ##
+
+
+```{r descriptive stats}
+summary(a)
+mean(a)
+mean(a[abs(a-mean(a)) < 2*sd(a)]) # after deleting point beyond 2 stddev 
+```
+
+## Confidence intervals ##
+
+```{r}
+t.test(a)
+t.test(a)$conf.int
+
+require(boot)
+sampmean <- function(x, d) { mean(x[d]) }
+boota <- boot(a, sampmean, 1000)
+boot.ci(boota)
+```
+
+
+
+
+
+
+# Comparing two groups (continous dependent variable) #
+
+```{r echo=FALSE}
+rm(list=ls())
+par(las=1, mar=c(2,3,1,1),mfrow=c(1,1))
+
+
+# the "standard error" function #
+se <- function(x) { sd(x)/sqrt(length(x)) }
+```
+
+
+```{r twogroups_continous}
+g1 <- 500 + rnorm(30, sd=40)
+g2 <- 520 + rnorm(20, sd=30)
+write(g1, 'group1.dat')
+write(g2, 'group2.dat')
+rm(g1, g2)
+```
+
+Data for this example are in two text files `group1.dat` and `group2.dat`. 
+
+```{r}
+g1 <- scan('group1.dat')
+g2 <- scan('group2.dat')
+```
+
+
+We arrange them into a data frame with two columns: `group` (a factor with two modalities: `Gr1` and `Gr2`), and `y` which contains the values themselves.
+
+```{r}
+tg <- data.frame(group=factor(rep(c('Gr1', 'Gr2'), 
+                                  c(length(g1), length(g2)))),
+                 y=c(g1, g2))
+
+head(tg)
+str(tg)
+table(tg$group)
+```
+
+### Graphical explorations ###
+
+```{r}
+hist(tg$y)
+```
+
+```{r}
+boxplot(tg$y ~ tg$group)
+```
+
+When the samples are small, stripchart may be the best:
+
+```{r}
+stripchart(tg$y ~ tg$group, 
+           vertical=TRUE,
+           pch=1)
+```
+
+If the samples are large enough, you can create density plots:
+
+```{r}
+par(mfrow=(c(2,1)))
+xsca <- range(tg$y)
+for (gr in levels(tg$group))
+{
+  with(subset(tg, group==gr),
+       {
+         plot(density(y), xlim=xsca, main=gr, bty='l')
+         rug(y, ticksize=0.1)
+         })
+}
+```
+
+Obtain the basic descriptive stats
+
+```{r}
+attach(tg)
+signif(tapply(y, group, mean),3)
+signif(tapply(y, group, median), 3)
+signif(tapply(y, group, sd), 3)
+signif(tapply(y, group, se), 3)
+detach(tg)
+```
+
+### Inferential statistics ###
+
+
+Student T-tests. First assuming equal variance, then relaxing this assumption
+```{r}
+t.test(y ~ group, data=tg, var.equal=TRUE)
+t.test(y ~ group, data=tg)
+```
+
+Somewhat more information can be obtained by fitting linear models. 
+
+First with a parametrisation (`contr.treatment`) of group where the intercept will correspond to the mean of group 1 and the effect will estimate the difference between the two groups. 
+
+```{r}
+contrasts(tg$group) <- contr.treatment
+contrasts(tg$group)
+summary(lm(y ~ group, data=tg))
+```
+
+Alternatively, one can prefer a parametrisation where the intercept estimates the global mean and the first parameter is the deviation from the global mean.
+
+```{r}
+contrasts(tg$group) <- contr.sum
+contrasts(tg$group)
+summary(lm(y ~ group, data=tg))
+```
+
+### Barplot with standard errors ###
+
+Barplot with the means and their associated standard errors (note this is not the standard error for the difference between the groups' means, which is roughly $\sqrt{2}$ larger and, maybe for this reason, rarely used in psychology papers (like they rarely report confidence intervals))
+
+```{r}
+attach(tg)
+par(mfrow=c(1,1))
+means <- tapply(y, group, mean)
+ses <- tapply(y, group, se)
+
+ysca = c(min(means - 3 * ses), max(means + 3 * ses))
+
+mp <- barplot(means, ylim=ysca, xpd=F)
+arrows(mp, means-ses, 
+       mp, means+ses, 
+       code=3, angle=90)
+
+detach(tg)
+```
+
+A much nicer plot can be constructed, with confidence intervals for the means and for their difference (Cumming, Geoff, and Sue Finch. 2005. “Inference by Eye: Confidence Intervals and How to Read Pictures of Data.” American Psychologist 60 (2): 170–180.)
+
+
+```{r}
+attach(tg)
+m1 <- t.test(y[group=='Gr1'])$conf.int
+m2 <- t.test(y[group=='Gr2'])$conf.int
+di <- diff(t.test(y~group)$conf.int)
+ysca <- c(min(c(m1,m2)-0.3*diff(range(c(m1,m2)))),
+          max(c(m1,m2)+0.3*diff(range(c(m1,m2)))))
+          
+plot(c(Gr1=1, Gr2=2, difference=3),
+     c(mean(m1), mean(m2), mean(m2)),
+     pch=c(16,16,17), ylim=ysca, xlim=c(.5,3.5), axes=F, xlab='', ylab='')
+axis(2, las=1)
+axis(1,at=1:3,labels=c('Gr1','Gr2','difference'))
+arrows(1:3, c(m1[1], m2[1], mean(m2)-di/2),
+       1:3, c(m1[2], m2[2], mean(m2)+di/2),
+       code=3, angle=90)
+abline(h=mean(m1), lty=2)
+abline(h=mean(m2), lty=2)
+
+detach(tg)
+```
+
+# Comparison of two groups #
+
+```{r}
+meang1 <- 100
+meang2 <- 110
+g1 <- meang1 + scale(rnorm(30,))*10
+g2 <- meang2 + scale(rnorm(30))*10
+```
+
+```
+
+boxplot(cbind(g1, g2))
+
+t.test(g1, g2, var.equal=TRUE)
+```
+
+```{r}
+```
+
+First, let us create a 2x2 design, resulting from the crossing of binary factors 'a' and 'b': 
+
+```{r}  
+a <- gl(2, 1, 4)
+b <- gl(2, 2, 4)
+means <- c(4, 6, 10, 15)
+interaction.plot(a,b,means,ylim=c(0,17),legend=F,type='b',pch=16,bty="l")
+```
+
+First, we fit an additive model without the interaction term.
+
+```{r}
+tapply(means, list(a=a, b=b), mean)
+diff(tapply(means, list(a), mean)) # main effect of a
+diff(tapply(means, list(b), mean)) # main effect of b
+
+summary(mod2<-lm(means~a+b))
+model.matrix(mod2)
+model.tables(aov(means~a+b))
+model.tables(aov(means~a*b))
+```
+
+Then, we fit a model including the interaction:
+
+```{r, fig=TRUE}
+par(las=1)
+
+interaction.plot(a,b,means,ylim=c(0,17),legend=F,type='b',pch=16,bty="l")
+
+eps=.9
+text(1,4+eps,"a1b1")
+text(2,6+eps,"a2b1")
+text(1,10+eps,"a1b2")
+text(2,15+eps,"a2b2")
+
+lines(c(1,2),c(10,12),lty=3)
+
+arrows(1,0,1,4, code=3,length=.1)
+arrows(2,4,2,6, code=3, length=.1)
+arrows(1,4,1,10, code=3, length=.1)
+arrows(2,12,2,15, code=3, length=.1)
+
+
+mod1 = lm(means~a*b)
+model.matrix(mod1)
+summary(mod1)
+
+text(1.08,2,"Intercept") # intercept
+text(2.08,5,"a2") # a2
+text(1.08,7.5,"b2") # b2
+text(2.08,13,"a2:b2") # a2:b2
+```
+
+# Comparing the means of several independent groups #
+
+
+```{r echo=FALSE}
+rm(list=ls())
+par(las=1, mar=c(2,3,1,1),mfrow=c(1,1))
+
+# the "standard error" function #
+se <- function(x) { sd(x)/sqrt(length(x)) }
+```
+
+```{r oneway_anova_indepgroups_continous, echo=FALSE}
+ns <- c(60,56,57,60,55)
+ngroups <- length(ns)
+effects <- c(5,5,6,5,4)
+
+group <- factor(rep(paste('Gr',1:ngroups,sep=''), ns))
+y <- rep(effects, ns) + rep(rnorm(ngroups), ns) + rnorm(sum(ns))
+write.csv(data.frame(group, y), "oneway.csv")
+rm(group, y)
+```
+
+Data are in a spreasheet format, in `oneway.csv`
+
+```{r}
+ow <- read.csv('oneway.csv')
+head(ow)
+str(ow)
+```
+
+We can perform the same operations as we did for the two samples case.
+
+
+### Graphical explorations ###
+
+```{r}
+attach(ow)
+hist(y)
+plot(y ~ group)
+stripchart(y ~ group, vertical=TRUE)
+for (g in group) { plot(density(y[group==g]), main=g); rug(y[group==g])}
+detach(ow)
+```
+
+### Descriptive stats ###
+
+```{r}
+attach(ow)
+signif(tapply(y, group, mean),3)
+signif(tapply(y, group, median), 3)
+signif(tapply(y, group, sd), 3)
+
+
+signif(tapply(y, group, se), 3)
+
+detach(ow)
+```
+
+### Inferential statistics ###
+
+
+```{r ezanova}
+require(ez)
+ow$sub <- factor(1:nrow(ow))
+ez_model <- ezANOVA(data=ow,
+                    wid=sub,
+                    dv=y,
+                    between = group)
+print(ez_model)
+
+ow$sub <- factor(1:nrow(ow))
+ezPlot(data = ow,
+       dv = y,
+       wid=sub,
+       between = group,
+       x = group)  
+  
+```
+
+```{r anova_aov}
+summary(av <- aov(y ~ group, data=ow))
+TukeyHSD(av)
+plot(TukeyHSD(av))
+```
+
+
+The output of `lm` provides additonal information
+```{r lm}
+contrasts(ow$group) <- contr.treatment
+summary(lmtr <- lm(y ~ group, data=ow))
+
+contrasts(ow$group) <- contr.sum
+summary(lmsum <- lm(y ~ group, data=ow))
+
+```
+ 
+
+
+ 
+# Comparing two treatments #
+
+
+
+```{r echo=FALSE}
+rm(list=ls())
+par(las=1, mar=c(2,3,1,1),mfrow=c(1,1))
+
+# the "standard error" function #
+se <- function(x) { sd(x)/sqrt(length(x)) }
+```
+
+In the previous section, the data from the two groups were assumed to be independent. If there is some pairing, for example if data were acquired in the same unit under two conditions, then the data are not independent. The simplest way to perform the data analysis is to  examine the differences between the two conditions computed over each unit.
+
+
+Here data come organized a long table format with one measure per row, and condition and subject as variables. This less convenient to compute the differences within subjects than a short format with one subject per row, and one column per condition, but better to run linear model. To convert from one representation to the other, see stack, reshape2, plyr...
+
+```{r pairedtest, echo=FALSE}
+n <- 20 
+effsize <- 1
+tc <- data.frame(sub=factor(paste('s', rep(1:n, each=2), sep='')),
+                 cond=factor(rep(1:2, n)),
+                 y=10+rep(rnorm(n),each=2) + rep(c(0, effsize), n) + rnorm(2*n)
+                 )
+write.csv(tc, "twotreat.csv")
+rm(n, effsize, tc)
+```
+
+```{r}
+tc <- read.csv("twotreat.csv")
+head(tc)
+str(tc)
+tc$sub <- factor(tc$sub) # make sure these vars are factors
+tc$cond <- factor(tc$cond)
+table(tc$sub)
+```
+
+(I assume that thereare no repeated measures within subject and treatment. If this is the case with your dataset, use aggregate or melt)
+
+### Graphical explorations ###
+
+```{r}
+with(tc, interaction.plot(cond, sub, y))
+```
+
+Fancier graphs can be obtained with lattice:
+
+```{r}
+require(lattice)
+xyplot(y ~ cond, group=sub, data=tc, type='l')
+```
+
+```{r}
+xyplot(y ~ cond | sub, data=tc, type='l')
+```
+
+We can also remove to main effects of subjects, as we are interested in the difference between condition within subjects:
+
+```{r}
+attach(tc)
+tc$ycorr <- y + mean(y) - tapply(y, sub, mean)[sub]
+detach(tc)
+attach(tc)
+par(mfcol=c(1,2))
+interaction.plot(cond, sub, y, main='original data')
+interaction.plot(cond, sub, ycorr, main='after removing intersub var')
+par(mfcol=c(1,1))
+detach(tc)
+```
+### Descriptive stats ###
+```{r}
+with(tc, signif(tapply(y, cond, mean)))
+
+# compute differences #
+c1 <- levels(tc$cond)[1]
+c2 <- levels(tc$cond)[2] 
+
+s1 <- tc$sub[tc$cond==c1]
+y1 <- tc$y[tc$cond==c1][order(s1)]
+
+s2 <- tc$sub[tc$cond==c2]
+y2 <- tc$y[tc$cond==c2][order(s2)]
+
+summary(y1-y2)
+se(y1-y2) # standard error of the effect
+
+# Check if the pairing was useful? #
+cor.test(y1, y2)
+
+```
+
+### Inferential stats ###
+
+```{r}
+t.test(y1, y2, paired=T)
+```
+
+Linear model approach
+
+```{r}
+(sm <- summary(model_lm <- lm(y ~ cond + sub, data=tc)))
+(diff <-sm$coefficients[2,'Estimate'])
+(diffse <- sm$coefficients[2,'Std. Error'])
+```
+
+
+In this simple situation, mixed effect models will yield the same p-values:
+
+```{r}
+
+require(nlme)
+(model_lme <- lme(y ~ cond, random=~1|sub, data= tc))
+summary(model_lme)
+
+# plot(ranef(model_lme)) #
+# plot(res_lme <- residuals(model_lme)) #
+# qqnorm(res_lme) #
+# qqline(res_lme) #
+# plot(model_lme) #
+```
+
+```{r}
+require(lme4)
+(model_lmer <- lmer(y ~ cond + (1|sub), data= tc))
+summary(model_lmer)
+# qqmath(ranef(model_lmer)) #
+```
+
+See http://freshbiostats.wordpress.com/2013/07/28/mixed-models-in-r-lme4-nlme-both/
+
+Bootstrap confidence interval for the difference
+
+```{r}
+require(boot)
+samplemean <- function(x, d) { mean(x[d]) }
+b <- boot(y1-y2, samplemean, 1000)
+boot.ci(b)
+```
+
+
+### Plots ###
+
+The errors bars can either represent the standard errors (or confidence intervals) of the means of each treatment, *or* the standard error bar for the difference between the two treatments when intersubject variability is taken out. 
+
+First graphics: with the std.err. of the means:
+
+```{r}
+attach(tc)
+par(mfrow=c(1,1))
+
+means <- tapply(y, cond, mean)
+(ses <- tapply(y, cond, se))
+
+ysca = c(min(means-3*ses), max(means+3*ses))
+
+mp <- barplot(means, ylim=ysca, xpd=F)
+arrows(mp, means-ses, 
+       mp, means+ses, 
+       code=3, angle=90)
+
+detach(tc)
+```
+
+If we remove the between Ss variability
+
+```{r}
+attach(tc)
+par(mfrow=c(1,1))
+    
+means <- tapply(y, cond, mean)
+(ses <- tapply(ycorr, cond, se))
+
+ysca = c(min(means-3*ses), max(means+3*ses))
+
+mp <- barplot(means, ylim=ysca, xpd=F)
+arrows(mp, means-ses, 
+       mp, means+ses, 
+       code=3, angle=90)
+
+detach(tc)
+```
+
+If we take the standard error from the regression:
+
+```{r}
+(sm <- summary(model_lm <- lm(y ~ cond + sub, data=tc)))
+diff <-sm$coefficients[2,'Estimate']
+diffse <- sm$coefficients[2,'Std. Error']
+
+attach(tc)
+par(mfrow=c(1,1))
+    
+means <- tapply(y, cond, mean)
+(ses <- rep(diffse, length(means)))
+ 
+ysca = c(min(means-3*ses), max(means+3*ses))
+
+mp <- barplot(means, ylim=ysca, xpd=F)
+arrows(mp, means-ses, 
+       mp, means+ses, 
+       code=3, angle=90)
+
+detach(tc)
+
+```
+
+A much nicer plot can be constructed, with confidence intervals for the means and for their difference (Cumming, Geoff, and Sue Finch. 2005. “Inference by Eye: Confidence Intervals and How to Read Pictures of Data.” American Psychologist 60 (2): 170–180.)
+
+
+```{r}
+attach(tc)
+m1 <- t.test(y[cond==1])$conf.int
+m2 <- t.test(y[cond==2])$conf.int
+di <- diff(t.test(y1-y2)$conf.int)
+ysca <- c(min(c(m1,m2)-0.1*diff(range(c(m1,m2)))),
+          max(c(m1,m2)+0.1*diff(range(c(m1,m2)))))
+          
+plot(c(Gr1=1, Gr2=2, difference=3),
+     c(mean(m1), mean(m2), mean(m2)),
+     pch=c(16,16,17), xlim=c(0.5, 3.5), ylim=ysca, axes=F, xlab='', ylab='')
+axis(2, las=1)
+axis(1,at=1:3,labels=c('cond1','cond2','difference'))
+arrows(1:3, c(m1[1], m2[1], mean(m2)-di/2),
+       1:3, c(m1[2], m2[2], mean(m2)+di/2),
+       code=3, angle=90)
+abline(h=mean(m1), lty=2)
+abline(h=mean(m2), lty=2)
+detach(tc)
+```
+
+```{r}
+require(gplots)
+par(mfcol=(c(1,2)))
+plotmeans(y ~ cond, data=tc)
+plotmeans(ycorr ~ cond, data=tc)
+```
+
+# Comparing several means, within subject #
+
+
+```{r}
+rm(list=ls())
+require(ez)
+require(gplots)
+require(lme4)
+```
+
+## Creation of simulated data ##
+
+```{r simulation}
+nsub <- 20 # number of subjects (statistical units)
+nconds <- 5 # number of conditions 
+effects <- c(110, 110, 120, 140, 100)
+sd_between_sub <- 10
+sd_within_sub <- 4
+
+ot <- data.frame(sub = factor(rep(paste('s',1:nsub,sep=''), each=nconds)),
+                 cond = factor(rep(paste('cond',1:nconds,sep=''), nsub)),
+                 y = effects + rep(rnorm(nsub, sd=sd_between_sub), each=nconds) + rnorm(nsub * nconds, sd=sd_within_sub))
+```
+
+### Exploration plots ###
+
+
+```{r exploration_plots}
+with(ot, interaction.plot(cond, sub, y, main='Cond * Subject plot', legend=FALSE))
+
+ot$ycorr <- ot$y + mean(ot$y) - tapply(ot$y, ot$sub, mean)[ot$sub]
+with(ot, interaction.plot(cond, sub, ycorr, main='Cond * Sub after removing Sub main effect', legend=FALSE))
+```
+
+### Classical analysis of variance model: ###
+
+```{r anova_ez}
+require(ez)
+#summary(aov_model <- aov(y ~ cond + Error(sub/cond), data=ot))
+
+ez_model <- ezANOVA(data=ot,
+                    dv=y,
+                    wid=sub,
+                    within = cond)
+print(ez_model)
+
+ezPlot(data=ot,
+       dv=y,
+       wid=sub,
+       within = cond,
+       x = cond)  
+  
+```
+
+```{r lmer}
+require(lme4)
+summary(lmer_model <- lmer(y ~ cond + (1 | sub), data=ot))
+anova(lmer_model)
+require(car)
+Anova(lmer_model)
+```
+
+```{r}
+# plotmeans(y ~ cond, data=ot, gap=0.1) #
+plotmeans(ycorr ~ cond, data=ot, gap=0.1)
+```
+
+
+# Factorial ANOVAs #
+
+
+```{r}
+rm(list=ls())
+require(ez)
+```
+
+Generation of a dataset S<A3*B2>
+
+```{r}
+subject = factor(paste('sub', 1:30, sep=''))
+A = gl(3 ,10, 30, labels=c('a1','a2','a3'))
+B = gl(2, 5, 30, labels=c('a2', 'b2'))
+x = rnorm(30, mean=10) + 1 * (A=='a1' & B=='b2')
+dat = data.frame(subject, A, B, x)
+```
+
+```{r}
+rm(subject, A, B, x)
+attach(dat)
+```
+
+Classical R approach
+
+```{r}
+table(A, B)
+tapply(x, list(A, B), mean)
+interaction.plot(A,B,x)
+summary(aov(x ~ A * B, data=dat))
+```
+
+Using ez
+
+```{r}
+ezPlot(data=dat,  dv=.(x), wid=.(subject), between=.(A,B), 
+       x=.(B), split=.(A))
+
+ezANOVA(data=dat, dv=x, wid=subject, between=c('A','B'))
+```
+
+```{r}
+detach(dat)
+```
+
+Same dataset but with A & B within subject 
+
+```{r}
+subject = gl(5, 1, 30, labels=paste('sub', 1:5, sep=''))
+dat$subject = subject
+table(dat$subject, dat$A, dat$B)
+```
+
+```{r}
+attach(dat)
+interaction.plot(A:B, subject, x)
+summary(aov(x ~ A*B + Error(subject/(A*B))))
+#summary(aov(x ~ A + Error(subject/A), data=dat, subset= (B==1)))
+#summary(aov(x ~ A + Error(subject/A), data=dat, subset= (B==2)))
+
+for (a in levels(A))
+  {
+  print(paste("Effect of B for A =",a))
+  print(summary(aov(x ~ B + Error(subject/(B), data=dat, subset=(A==a)))))
+}
+detach(dat)
+```
+
+```{r}
+ezPlot(data=dat,  dv=.(x), wid=.(subject), between=.(A), within=.(B), 
+       x=.(B), split=.(A))
+
+ezANOVA(data=dat,
+        dv=x,
+        wid=subject,
+        within=.(A, B))
+```
+
+
+Split-plot ANOVA (A within, B between)
+
+```{r}
+subject = gl(10, 1, 30, labels=paste('sub', 1:10, sep=''))
+dat$subject = subject
+table(dat$subject, dat$A, dat$B)
+table(dat$subject, dat$B:dat$A)
+summary(aov(x ~ A*B + Error(subject/A), data=dat))
+```
+
+```{r}
+ezANOVA(data=dat, dv=x, wid=subject, within=.(A), between=.(B))
+```
+
+
+
+# Correlated regressors in multiple regression #
+
+It is often asserted that one two (or more) independent variables are correlated, this creates a problem in multiple regression. What problem? And when is it serious?
+
+In multiple regression, the coefficients estimated for each regressor represents the influence of the associated variable *when the others are kept constant*.
+It  is the "unique" contribution of this variable.
+
+
+
+```{r}
+require(mvtnorm)
+require(car)
+
+n <- 100
+a1 <- 0.2
+a2 <- 0.3
+nsim <- 100
+
+for (cor in c(0, .2, .4, .6, .8))
+  {
+  d <- rmvnorm(n, sigma=matrix(c(1, cor, cor, 1), nrow=2))
+  x1 <- d[,1]
+  x2 <- d[,2]
+  print(cor.test(x1, x2))
+  print("VIF:")
+  print(vif(lm(rnorm(n)~x1 + x2)))
+
+  stats <- matrix(NA, nrow=nsim, ncol=4)
+  for (i in 1:nsim)
+    {
+    y <- a1 * x1 + a2 * x2 + rnorm(n)
+    lmmod <-lm(y ~ x1 + x2)
+    slm <- summary(lmmod)
+
+    stats[i,] <- as.numeric(slm$coefficients[2:3, 1:2])
+    }
+  boxplot(stats, main=cor, ylim=c(-0.2,0.6))
+  print(apply(stats, 2, summary))
+}
+```
+
+## display of parameters of lm in a simle 2x2 anova
+
+
+### model with interaction
+
+
+```{r}
+a=gl(2,1,4)
+b=gl(2,2,4)
+means=c(4,6,10,15)
+
+
+par(las=1)
+
+interaction.plot(a,b,means,ylim=c(0,17),legend=F,type='b',pch=16,bty="l")
+
+eps=.9
+text(1,4+eps,"a1b1")
+text(2,6+eps,"a2b1")
+text(1,10+eps,"a1b2")
+text(2,15+eps,"a2b2")
+
+lines(c(1,2),c(10,12),lty=3)
+
+arrows(1,0,1,4, code=3,length=.1)
+arrows(2,4,2,6, code=3, length=.1)
+arrows(1,4,1,10, code=3, length=.1)
+arrows(2,12,2,15, code=3, length=.1)
+
+
+mod1 = lm(means~a*b)
+model.matrix(mod1)
+summary(mod1)
+
+text(1.08,2,"Intercept") # intercept
+text(2.08,5,"a2") # a2
+text(1.08,7.5,"b2") # b2
+text(2.08,13,"a2:b2") # a2:b2
+```
+
+### Additive model
+
+```{r}
+tapply(means,list(a=a,b=b),mean)
+diff(tapply(means,list(a),mean)) # main effect of a
+diff(tapply(means,list(b),mean)) # main effect of b
+
+
+summary(mod2<-lm(means~a+b))
+model.matrix(mod2)
+model.tables(aov(means~a+b))
+model.tables(aov(means~a*b))
+```
