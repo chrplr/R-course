@@ -4,7 +4,8 @@ author: "Christophe Pallier"
 date: "6/7/2019"
 output:
   html_document:
-    df_print: paged
+    toc: true
+    toc_depth: 2
 ---
 
 # Le langage R et son ecosystème
@@ -907,7 +908,7 @@ vioplot(len ~ supp + dose, data=ToothGrowth)
 
 
 
-# dotplots
+### dotplots
 
 ```{r}
 with(ToothGrowth,
@@ -1140,7 +1141,7 @@ summary(regression)
 Pour réaliser une Analyse de Variance, on peut utiliser la fonction `aov()`, ou la fonction `ezANOVA()` du package `ez`.
 
 
-
+Voir le document _stats_with_R_
 
 # Cross-validation 
 
