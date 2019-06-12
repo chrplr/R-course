@@ -453,7 +453,7 @@ Les fonctions `lapply` et `sapply` correspondent à la fonction `map` des langua
 ```{r}
   lapply(list(1:10, c('a', 'b')), 
          length)
-   sapply(list(1:10, c('a', 'b')), 
+  sapply(list(1:10, c('a', 'b')), 
          length)
 ```
 
@@ -463,6 +463,8 @@ On peut également utiliser or `for` pour itérer sur les éléments d'une liste
 ```{r}
 for (elt in test) print(elt)  
 ```
+
+
 
 Les listes sont plus flexibles (par exemple, on peut avoir des listes de listes de différentes longueur), mais un peu moins performantes que les vecteurs du point de vue du temps d'accès.
 
@@ -589,14 +591,20 @@ tapply(ToothGrowth$len, list(ToothGrowth$supp, ToothGrowth$dose), sd)
 ```
 
 
-Remarque: tapply renvoit un array qui a autant de dimension que de nombre de facteurs passés dans le second arguments. Un fonction similaire, la fonction `aggregate` renvoit un data.frame plutôt qu'un array.
+Remarque: tapply renvoit un array qui a autant de dimensions que le nombre de facteurs listés dans le second argument. Une fonction similaire, la fonction `aggregate` renvoit un data.frame plutôt qu'un array.
 
 ```{r}
 aggregate(ToothGrowth$len, list(supp=ToothGrowth$supp, dose=ToothGrowth$dose), mean)
 ```
 
+Si on veut récupérer les sous-groupes sans leur appliquer de fonction, on utilise `split()`: 
 
-Mentionnons egalement la fonction `xtabs` qui permet d'utiliser des formules et renvoit un array:
+```{r}
+split(ToothGrowth$len, list(supp=ToothGrowth$supp, dose=ToothGrowth$dose))
+```
+
+
+Mentionnons également la fonction `xtabs` qui permet d'utiliser des formules et renvoit un array:
 
 ```{r}
 xtabs(len ~ supp + dose, data=ToothGrowth)
@@ -609,12 +617,26 @@ xtabs(len ~ ., data=ToothGrowth)
 un _data.frame_ n'est rien d'autre qu'une liste de vecteurs qui ont tous la même longueur.
 C'est la représentation « naturelle » pour un tableau de données bidimensionnel (observations en ligne, variables en colonnes).
 
+On peut inspecter un data.frame `df` avec:
+
+```{r}
+df = ToothGrowth
+head(df)
+str(df)
+summary(df)
+```
+
+On peut utiliser la notation `df[row, col]`pour accèder à l'élément placé en ``row, col`(remarque: df[[col]][row] marche aussi)`.
+
+
+Création d'un data.frame à partir de variables:
 
 ```{r}
 df = data.frame(sub=rep(1:10, each=5), 
                 group=rep(1:2, each=25), 
                 data=rnorm(50))
 df
+df[order(df$data),]
 ```
 
 #### importation et exportation de données.
@@ -778,6 +800,28 @@ codes = c('ab43', 'cf11', '8a45')
 (tab2 = data.frame(codes, mesure=rnorm(12)))
 (jointable = merge(tab1, tab2))
 ```
+
+
+# Fonctions
+
+Syntax:
+
+    name <- function(parameter1, parametre2) <- { body }
+
+La valeur renvoyée est la dernière expression dans `body` (ca peut être une liste!)
+
+Les parametres peuvent avoir des valeurs par defaut:
+
+```{r} 
+myfunc <- function(x, y = 1) { x + y }
+
+myfunc(2, 2)
+myfunc(2)
+
+```
+
+
+
 
 
 # Graphiques
