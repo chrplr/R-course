@@ -1,6 +1,6 @@
 ---
-title: "R Notebook"
-author: "Christophe Pallier"
+title: "R course"
+author: "Christophe Pallier pour RITME"
 date: "6/7/2019"
 output:
   html_document:
@@ -1139,13 +1139,13 @@ ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(
 
 # Exemples d'utilisation de R
 
-* [Examples of basic data analyses with R](http://www.pallier.org/examples-of-basic-data-analyses-with-r.html#estimating-the-mean-of-a-population-from-a-sample)
+* [Examples of basic data analyses with R](http://www.pallier.org/examples-of-basic-data-analyses-with-r.html)
 
-* [Easy ANOVA](http://www.pallier.org/easy-anova-with-r.html#easy-anova-with-r)
+* [Easy ANOVA](http://www.pallier.org/easy-anova-with-r.html)
 
 Voir également le document `stats_with_R.Rmd``
 
-## Exercices: 
+# Exercices d'analyse de données
 
 ### Dossier sommeil
 
