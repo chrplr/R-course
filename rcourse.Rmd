@@ -54,6 +54,12 @@ Exemple:
 
 ```
 
+Exemple de documents rédigé en Rmarkdown: 
+
+* <http://www.pallier.org/pdfs/methodo-recueil-manipulation.pdf>
+
+* 
+
    Pour plus d'info, consulter:
 
    * <https://blog.wax-o.com/2014/04/tutoriel-un-guide-pour-bien-commencer-avec-markdown/>
@@ -299,7 +305,7 @@ Mais il est assez rare que cela soit nécessaire car on peut appliquer directeme
 
 **Exercices:**
 
-- calculer la somme de 1000 premiers nombres entiers
+- calculer la somme des 1000 premiers nombres entiers
 - calculer factorielle de 20
 - calculer la proportion d'éléments négatifs dans un vecteur.
 - étant donné deux vecteurs de chaines de caractères, retourner combien de chaines sont identiques (et à la même position)  dans les deux vecteurs.
@@ -800,40 +806,51 @@ codes = c('ab43', 'cf11', '8a45')
 (tab2 = data.frame(codes, mesure=rnorm(12)))
 (jointable = merge(tab1, tab2))
 ```
+### Reformater des data.frame
+
+* Avec stack et unstack: <https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/stack>
+
+```{r}
+data(PlantGrowth)
+names(PlantGrowth)
+formula(PlantGrowth)         # check the default formula
+pg <- unstack(PlantGrowth)   # unstack according to this formula
+pg
+stack(pg)                    # now put it back together
+stack(pg, select = -ctrl)    # omitting one vector
+```
+
+
+* <https://garrettgman.github.io/tidying/>
+
+
 
 
 # Fonctions
 
-Syntax:
+La syntax pour déclarer une fonction est:
 
     name <- function(parameter1, parametre2) <- { body }
 
 La valeur renvoyée est la dernière expression dans `body` (ca peut être une liste!)
 
-Les parametres peuvent avoir des valeurs par defaut:
+Remarque: les paramètres peuvent avoir des valeurs par defaut:
 
 ```{r} 
 myfunc <- function(x, y = 1) { x + y }
 
 myfunc(2, 2)
 myfunc(2)
-
 ```
-
-
 
 
 
 # Graphiques
 
-
-En plus des graphiques de base, et des libraries 'lattice' et 'ggplot2', il existe de nombreuses autres librairies graphiques
+En plus des fonctions graphiques ""de base", et des libraries 'lattice' et 'ggplot2', il existe de nombreuses librairies graphiques pour R:
 <http://the-r.kr/2018/05/20/9-useful-r-data-visualization-libraries-for-any-discipline/>
 
-
-Voisr <https://www.r-graph-gallery.com>
-
-Un livre fort utile est _R graphics cookbook_ par Winston Chang
+Voir <https://www.r-graph-gallery.com>
 
 
 ## Graphiques "de base" 
@@ -992,8 +1009,6 @@ arrows(mp, means - se, mp, means + se, code=3, angle=90)
 ```
 
 
-
-
 #### sauvegarder les graphiques dans des fichiers images:
 
 
@@ -1019,10 +1034,8 @@ graphics.off()
 
 ## treillis (lattice)
 
-```{r}
-library(lattice)
-```
 
+* _Lattice: Multivariate Data Visualization with R_: <https://www.springer.com/gp/book/9780387759685>
 
 From <https://www.statmethods.net/advgraphs/trellis.html>:
 
@@ -1033,50 +1046,50 @@ attach(mtcars)
 
 
 # create factors with value labels
-gear.f<-factor(gear, levels=c(3, 4, 5),
-   labels=c("3gears","4gears","5gears"))
-cyl.f <-factor(cyl,levels=c(4, 6, 8),
-   labels=c("4cyl","6cyl","8cyl"))
+gear.f <- factor(gear, levels=c(3, 4, 5),
+                 labels=c("3gears","4gears","5gears"))
+cyl.f <- factor(cyl,levels=c(4, 6, 8),
+                labels=c("4cyl","6cyl","8cyl"))
 
 # kernel density plot
 densityplot(~ mpg,
-   main="Density Plot",
-   xlab="Miles per Gallon")
+            main="Density Plot",
+            xlab="Miles per Gallon")
 
 # kernel density plots by factor level
 densityplot(~ mpg | cyl.f,
-   main="Density Plot by Number of Cylinders",
-   xlab="Miles per Gallon")
+            main="Density Plot by Number of Cylinders",
+            xlab="Miles per Gallon")
 
 # kernel density plots by factor level (alternate layout)
 densityplot(~ mpg | cyl.f,
-   main="Density Plot by Numer of Cylinders",
-   xlab="Miles per Gallon",
-   layout=c(1,3))
+            main="Density Plot by Numer of Cylinders",
+            xlab="Miles per Gallon",
+            layout=c(1,3))
 
 # boxplots for each combination of two factors
 bwplot(cyl.f ~ mpg | gear.f,
-   ylab="Cylinders", xlab="Miles per Gallon",
-   main="Mileage by Cylinders and Gears",
-   layout=(c(1,3)))
+       ylab="Cylinders", xlab="Miles per Gallon",
+       main="Mileage by Cylinders and Gears",
+       layout=(c(1,3)))
 
 # scatterplots for each combination of two factors
 xyplot(mpg ~ wt | cyl.f * gear.f,
-   main="Scatterplots by Cylinders and Gears",
-   ylab="Miles per Gallon", xlab="Car Weight")
+       main="Scatterplots by Cylinders and Gears",
+       ylab="Miles per Gallon", xlab="Car Weight")
 
 # 3d scatterplot by factor level
 cloud(mpg ~ wt * qsec | cyl.f,
-   main="3D Scatterplot by Cylinders")
+      main="3D Scatterplot by Cylinders")
 
 # dotplot for each combination of two factors
 dotplot(cyl.f ~ mpg | gear.f,
-   main="Dotplot Plot by Number of Gears and Cylinders",
-   xlab="Miles Per Gallon")
+        main="Dotplot Plot by Number of Gears and Cylinders",
+        xlab="Miles Per Gallon")
 
 # scatterplot matrix
 splom(mtcars[c(1,3,4,5,6)],
-   main="MTCARS Data")
+      main="MTCARS Data")
 
 detach()
 ```
@@ -1085,21 +1098,11 @@ Voir <http://lmdvr.r-forge.r-project.org/figures/figures.html>
 
 ## ggplot2
 
-```{r}
-library(ggplot2)
-```
-
 
 ggplot2 est une librairie graphique plus récente. Permet de faire des graphiques esthétiques, mais plus difficile à controler finement qu'avec graphics ou lattice.
 
 
-<https://ggplot2.tidyverse.org/reference/>
-
-
-Livre: _Applied Data Visualization with R and ggplot2_  (<https://github.com/TrainingByPackt/Applied-Data-Visualization-with-R-and-ggplot2>)
-
-
-#### qplot
+### qplot
 
 ```{r}
 require(ggplot2)
@@ -1123,14 +1126,175 @@ data(iris)
 ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(width=0.1, height=0.1)
 ```
 
+### Tutorials and books
+
+* [Complete ggplot2 tutorial](http://r-statistics.co/Complete-Ggplot2-Tutorial-Part1-With-R-Code.html) de Selva Prabhakaran
+
+* [R graphics cookbook](http://www.cookbook-r.com/) de  Winston Chang
+
+*  _Applied Data Visualization with R and ggplot2_  (<https://github.com/TrainingByPackt/Applied-Data-Visualization-with-R-and-ggplot2>)
+
+* <https://ggplot2.tidyverse.org/reference/>
+
+
+# Exemples d'utilisation de R
+
+* [Examples of basic data analyses with R](http://www.pallier.org/examples-of-basic-data-analyses-with-r.html#estimating-the-mean-of-a-population-from-a-sample)
+
+* [Easy ANOVA](http://www.pallier.org/easy-anova-with-r.html#easy-anova-with-r)
+
+Voir également le document `stats_with_R.Rmd``
+
+## Exercices: 
+
+### Dossier sommeil
+
+Lors d'une expérimentation médicale, on a relevé le temps de sommeil T
+de 10 patients (facteur Sujet) sous l'effet de deux médicaments (d'où
+le facteur Médicament M). Chaque sujet a pris successivement l'un et
+l'autre des deux médicaments.
+
+* Source: Student (1908) The probable error of a mean, _Biometrika_, VI,
+1-25.
+
+* Données `sommeil.txt`
+
+* Question: Ces données ont été recueillies pour tester l'hypothèse que le
+médicament m2 est plus efficace que le médicament m1. Est-ce le cas ?
+
+
+### Dossier pédagogie
+
+Lors d'une expérimentation pédagogique, on désire comparer
+l'efficacité de quatre méthodes d'enseignements.
+
+On dispose des notes obtenues à un examen par quatre groupes d'élèves
+ayant chacun reçu un des 4 types d'enseignements (Données fictives).
+
+* Données: `pedago.txt`
+
+* Question: Comparer les résultats obtenus en fonction des méthodes.
+
+
+### Dossier négligence
+
+Une recherche a porté sur la "pseudo-négligence" qu'on observe chez
+des sujets normaux. Ce nom provient des similarités qu'elle présente
+avec l'hémi-négligence (atteinte de la moitié du champ visuel) de
+sujets atteints d'une lésion cérébrale. La tâche des sujets consiste à
+déterminer le milieu subjectif d'une baguette de 24cm avec la seule
+aide d'informations kinesthésiques. La pseudo-négligence se traduit
+par une déviation systématique vers la droite (pour les droitiers) de
+ce milieu subjectif par rapport au milieu objectif de la baguette.
+
+Les données portent sur 24 femmes droitières (facteur S) réparties
+selon 2 conditions (12 sujets pour chacune): active (c1) où le sujet
+peut librement déplacer son doigt posé sur un curseur mobile le long
+de la baguette; ou passive (c2) où le sujet commande un moteur
+déclenchant le mouvement de la baguette dans un sens ou dans l'autre,
+alors que son doigt ne bouge pas (facteur C). Chaque sujet exécute
+cette tâche dans 6 situations expérimentales obtenues par le
+croisement de: la main utilisée, gauche (m1) ou droite (m2); et
+l'orientation du regard, 30° à gauche (o1), 0° (o2) ou 30° à droite
+(o3) (facteurs M et O). Pour chaque sujet et chaque situation on
+mesure la déviation en cm entre le milieu subjectif et le milieu
+objectif de la baguette. Une déviation à droite est notée par une
+valeur positive, à gauche par une valeur négative.
+
+On s'intéresse ici à l'effet de la condition (C) lorsque le sujet
+utilise sa main habituelle (m2) (Rappel : tous les sujets sont
+droitiers) et lorsqu'il se trouve en face du milieu de la baguette
+(avec l'orientation à 0 degrés)
+
+* Source: Chokron, Imbert (1993) - Egocentric reference and asymmetric
+perception of space, Neuropsychologia, 31, 3, 267-275. D'après J.M.
+Bernard (1994) - Structure des données, d
+
+* Données `neglige2.txt`
+
+* Questions: Importer ces données, les visualiser, comparer les groupes.
+Conclusion?
 
 
 
-### More documentations on graphics
+### Dossier family
 
-* Comparaison lattice vs. ggplot2:
+Etude réalisée au USA sur les origines des stéréotypes liés au sexe.
+35 familles choisies au hasard et ayant une fille ainée (ou fille
+unique) en Troisième.
 
-  * <http://motioninsocial.com/tufte/>
+Le père a répondu à un questionnaire sur ses intérêts pour le sport,
+noté sur une échelle numérique de 0 à 50 (FATH)
+
+La mère a répondu au même questionnaire (MOTH)
+
+Le professeur d'éducation physique de chacune des filles a noté les
+performances physiques générales de la fille de 0 à 20 (PROF).
+
+La fille a répondu également au questionnaire d'inérêt pour le sport
+(GIRL).
+
+* Source
+Hays, W.L. (1994) - \emph{Statistics, Fort Worth: Harcourt Brace
+College Publishers (5ème édition), p.671-672
+
+* Données: `family.txt`
+
+* Questions Que faire avec ces données?
+
+
+
+### Dossier IO
+
+En 1980, on a interrogé des lycéens (garçons et filles) sur leurs
+intentions d'orientation après le bac (études scientifiques,
+littéraires ou techniques).
+
+* Source: Il s'agit de données en partie fictives, inspirées d'un exemple de M.
+Reuchlin.
+
+* Données: `io.txt` 
+
+* Questions: Peut-on dire que l'orientation envisagée est liée au sexe chez
+l'ensemble des lycéens de cette année 1980 ?
+
+
+--- 
+Voir <http://www.pallier.org/introduction-to-r.html#exemples-danalyses-de-donnees>
+
+# Ressources
+
+
+* [R graphics cookbook](http://www.cookbook-r.com/) de  Winston Chang
+
+* [Tufte in R]<http://motioninsocial.com/tufte/> de Lukasz Piwek
+
+*  [R for Data Science](<https://r4ds.had.co.nz/>) utilise le metapackage tidyverse (<https://www.tidyverse.org/>) qui rassemble divers packages qui essayent de "rationnaliser" certaines aspects de R. Entre autre:
+
+   - [ggplot2](https://ggplot2.tidyverse.org/)
+   - [maggrit](https://magrittr.tidyverse.org/)
+   - [dplyr](https://dplyr.tidyverse.org/)
+
+
+  Voir notamment <https://r4ds.had.co.nz/pipes.html> pour les pipelines.
+
+* [Introduction à R](http://www.pallier.org/introduction-a-lanalyse-statistiques-des-donnees-avec-r.html)
+
+
+* Anti-sèches (cheat-sheets): https://www.rstudio.com/resources/cheatsheets/
+
+
+
+* Web scrapping: package `rvest`: <https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/>
+
+* Cross-validation: Etant donné un ensemble de données (X, y), lé découper en ensembles d'entrainement et de test, estimer les parametres du modèle sur les données d'entrainement, puis calculer la qualité du fit des données prédite par rapport aux données observées dans l'ensemble de tests.
+
+   Le package `caret` permet d'automatiser la cross-validation : http://www.sthda.com/english/articles/38-regression-model-validation/157-cross-validation-essentials-in-r/
+
+
+---
+More about `ggplot2`:
+
 
   * <https://www.stat.ubc.ca/~jenny/STAT545A/block18_gapminderGgplot2VsLattice.html>
 
@@ -1151,67 +1315,3 @@ ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(
    * <https://learnr.wordpress.com/2009/08/03/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-8/>
 
    * <https://learnr.wordpress.com/2009/08/26/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-final-part/>
-
-
-
-# Linear models & Anova
-
-
-```{r}
-data(cars)
-str(cars)
-with(cars, { plot(speed, dist, bty='l')} )
-mod = lm(dist ~ speed, data=cars)
-summary(mod)
-abline(mod, col='blue')
-# identify(cars$speed, cars$dist, 1:nrow(cars))
-```
-
-
-
-```{r}
-x1 = runif(20)
-x2 = runif(20)
-y = rnorm(20) + 0.2 * x1 - .5 * x2
-
-pairs(cbind(x1, x2, y))
-
-regression = lm(y ~ x1 + x2)
-print(regression)
-summary(regression)
-```
-
-
-Pour réaliser une Analyse de Variance, on peut utiliser la fonction `aov()`, ou la fonction `ezANOVA()` du package `ez`.
-
-
-Voir le document _stats_with_R_
-
-# Cross-validation 
-
-
-Exercice: Etant donné un ensemble de données (X, y), lé découper en ensembles d'entrainement et de test, estimer les parametres du modèle sur les données d'entrainement, puis calculer la qualité du fit des données prédite par rapport aux données observées dans l'ensemble de tests.
-
-
-Note:Le package `caret` permet d'automatiser la cross-validation : http://www.sthda.com/english/articles/38-regression-model-validation/157-cross-validation-essentials-in-r/
-
-
-# tidyverse
-
-tidyverse <https://www.tidyverse.org/> rassemble divers packages qui essaye de "rationnaliser" certaines aspects de R.
-
-Entre autre:
-
-- [ggplot2](https://ggplot2.tidyverse.org/)
-- [maggrit](https://magrittr.tidyverse.org/)
-- [dplyr](https://dplyr.tidyverse.org/)
-
-
-Des exemples sont présentés livre [R for Data Science](<https://r4ds.had.co.nz/>)
-
-Par exemple, voir <https://r4ds.had.co.nz/pipes.html> pour les pipes.
-
-
-# Web scrapping
-
-package `rvest`: https://getpocket.com/a/read/1671226858

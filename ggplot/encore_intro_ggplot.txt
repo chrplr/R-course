@@ -1,0 +1,303 @@
+# introduction aux graphiques avec ggplot2
+# charger et attacher le package ggplot2
+
+library(ggplot2)
+
+ggplot()
+# il faut des donnees
+ggplot(data = ToothGrowth)
+
+# il faut aussi expliciter comment on veut les représenter
+# le systeme d'axe : aestetic
+ggplot(data = ToothGrowth,
+       mapping = aes(x = len))
+
+# il faut specifier comment representer l'information
+# dans ce systeme d'axe : les geom_
+ggplot(data = ToothGrowth,
+       mapping = aes(x = len)) +
+  geom_histogram()
+
+help("geom_histogram")
+
+ggplot(data = ToothGrowth,
+       mapping = aes(x = len)) +
+  geom_histogram(binwidth = 5)
+
+ggplot(data = ToothGrowth,
+       mapping = aes(x = len)) +
+  geom_histogram(binwidth = 5) +
+  facet_grid(dose ~ supp)
+
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = dose)) +
+  geom_boxplot()
+
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = factor(dose))) +
+  geom_boxplot()
+
+
+# boites à moustaches
+# version minimale
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = supp)) +
+  geom_boxplot()
+
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = dose)) +
+  geom_boxplot()
+
+# personnalisation
+# 1. couleur et transparence
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = factor(dose))) +
+  geom_boxplot(color = "darkgreen",
+               fill = "lightgreen",
+               alpha = 0.3)
+# 2. titre pour le graphe et les axes  
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = factor(dose))) +
+  geom_boxplot(color = "darkgreen",
+               fill = "lightgreen",
+               alpha = 0.3) +
+  labs(title = "Effet de la vitamine C sur la croissance des dents",
+       y = "longueur des dents (mm)",
+       x = "dose de vitamine C (mg/jour)")
+
+# on voudrait ajouter l'information sur la supplémentation
+# première méthode : avec les sous-graphes
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = factor(dose))) +
+  geom_boxplot(color = "darkgreen",
+               fill = "lightgreen",
+               alpha = 0.3) +
+  facet_grid(~ supp) +
+  labs(title = "Effet de la vitamine C sur la croissance des dents",
+       y = "longueur des dents (mm)",
+       x = "dose de vitamine C (mg/jour)")
+
+# seconde méthode : avec les couleurs
+# cf ce qu'on avait fait pour les densités
+# on indique dans l'esthétique qu'on veut représenter avec les
+# couleurs les différents niveaux du facteur supp
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_boxplot(alpha = 0.3) +
+  labs(title = "Effet de la vitamine C sur la croissance des dents",
+       y = "longueur des dents (mm)",
+       x = "dose de vitamine C (mg/jour)")
+
+
+# personnalisation des couleurs pour le remplissage :
+# scale_fill_manual()
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_boxplot(alpha = 0.3) +
+  labs(title = "Effet de la vitamine C sur la croissance des dents",
+       y = "longueur des dents (mm)",
+       x = "dose de vitamine C (mg/jour)") +
+  scale_fill_manual(values = c("blue", "yellow"))
+
+# et pour passer à un violin plot pour mieux voir les distributions
+# il suffit de changer un seul mot !
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_violin(alpha = 0.3) +
+  labs(title = "Effet de la vitamine C sur la croissance des dents",
+       y = "longueur des dents (mm)",
+       x = "dose de vitamine C (mg/jour)") +
+  scale_fill_manual(values = c("blue", "yellow"))
+
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_violin(alpha = 0.3,
+              fill = "green") +
+  labs(title = "Effet de la vitamine C sur la croissance des dents",
+       y = "longueur des dents (mm)",
+       x = "dose de vitamine C (mg/jour)") +
+  scale_fill_manual(values = c("blue", "yellow"))
+
+
+ggplot() + 
+  geom_boxplot(data = ToothGrowth,
+               mapping = aes(y = len,
+                             x = factor(dose),
+                             fill = supp))
+
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) + 
+  geom_boxplot()
+
+# personnalisation
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = supp)) +
+  geom_boxplot(color = "purple",
+               fill = "orange",
+               alpha = .4) +
+  labs(title =" Longueur des dents",
+       x = "Dose (mg/jour)", 
+       y = "Longueur (mm)")
+
+# comment faire pour avoir la dose en abscisse ?
+# utiliser factor !
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len, x = factor(dose))) +
+  geom_boxplot(color = "purple",
+               fill = "orange",
+               alpha = .4) +
+  labs(title =" Longueur des dents",
+       x = "Dose (mg/jour)", 
+       y = "Longueur (mm)")
+
+# on aimerait bien avoir à la fois la dose et
+# le mode de supplémentation
+# codage en couleur de remplissage
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_boxplot(alpha = .4) +
+  labs(title =" Longueur des dents",
+       x = "Dose (mg/jour)", 
+       y = "Longueur (mm)")
+
+# la notion d'héritabilité des propriétés
+# et de hiérarchie
+# codage en couleur de remplissage
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_boxplot(fill = "orange",
+               alpha = .4) +
+  labs(title =" Longueur des dents",
+       x = "Dose (mg/jour)", 
+       y = "Longueur (mm)")
+# ici le fill au niveau du geom va à l'encontre
+# du fill défini dans l'esthétique au niveau
+# de ggplot
+
+# illustration
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp)) +
+  geom_boxplot()
+# est identique à
+ggplot() +
+  geom_boxplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     fill = supp))
+
+# 
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose),
+                     color = supp)) +
+  geom_boxplot(position = position_dodge(1)) +
+  geom_point(position = position_dodge(1))
+
+# graphe perfectionné
+ggplot(data = ToothGrowth,
+       mapping = aes(y = len,
+                     x = factor(dose))) +
+  geom_violin(mapping = aes(fill = supp),
+              draw_quantiles = c(0.25, 0.5, 0.75),
+              position = position_dodge(.7),
+              alpha = .4) +
+  geom_point(mapping = aes(group = supp),
+    position = position_dodge(.7),
+    shape = 1) +
+  scale_fill_manual(name = "supplementation :",
+    values = c("orange","blue"),
+                    labels = c("jus d'orange",
+                               "acide ascorbique")) +
+  scale_y_continuous(breaks = seq(from = 0,
+                                  to = 35,
+                                  by = 5)) +
+  scale_x_discrete(labels = c("faible : 0.5",
+                              "moyenne : 1",
+                              "forte : 2")) +
+  geom_vline(mapping = aes(xintercept = 1.5)) +
+  geom_vline(mapping = aes(xintercept = 2.5)) +
+  labs(title =" Longueur des dents et vitamine C",
+       x = "Dose (mg/jour)", 
+       y = "Longueur (mm)") +
+  theme_classic() +
+  theme(legend.position = "bottom",
+        plot.title = element_text(hjust = .5,
+                                  size = 16),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 10))
+
+Toothgrowth_description
+# attention à la structure de ce dataframe !
+str(Toothgrowth_description)
+# en fait len.moyenne et len.ecarttype sont deux
+# colonnes de len qui est devenue une matrice.
+# on y a accès par exemple avec leurs indices
+
+ggplot(data = Toothgrowth_description,
+       mapping = aes(x = dose,
+                     color = supp)) +
+  geom_point(mapping = aes(y = len[,1],
+                           shape = supp),
+             position = position_dodge(.5)) +
+  geom_errorbar(mapping = aes(ymin = len[,1] - len[,2],
+                              ymax = len[,1] + len[,2]),
+                position = position_dodge(.5),
+                width = .3)
+
+
+
+# version avec la moyenne et les ecarts types
+TG_moyenne = aggregate(len ~ supp + dose, data = ToothGrowth, FUN = mean)
+TG_ecart_type = aggregate(len ~ supp + dose, data = ToothGrowth, FUN = sd)
+
+TG_description = data.frame(supp = c("OJ","VC","OJ","VC","OJ","VC"),
+           dose = c(.5, .5, 1, 1, 2, 2),
+           moyenne = TG_moyenne$len,
+           ecart_type = TG_ecart_type$len)
+str(TG_description)
+
+# version presque aussi moche
+TG_conditions = data.frame(supp = c("OJ","VC","OJ","VC","OJ","VC"),
+           dose = c(.5, .5, 1, 1, 2, 2))
+TG_description = cbind(TG_conditions,
+                       moyenne = TG_moyenne$len,
+                       ecart_type = Tg_ecart_type$len)
+str(TG_description)
+
+# version plus subtile avec dplyr
+library(dplyr)
+TG = left_join(TG_moyenne, TG_ecart_type, by = c("dose", "supp"))
+str(TG)
+
+ToothGrowth %>%
+  group_by(dose, supp) %>%
+  summarise(moyenne = mean(len),
+            ecart_type = sd(len))
+
+ToothGrowth %>%
+  group_by(dose, supp) %>%
+  summarise(moyenne = mean(len),
+            ecart_type = sd(len)) %>%
+ggplot(mapping = aes(x = dose,
+                     color = supp)) +
+  geom_point(mapping = aes(y = moyenne),
+             position = position_dodge(.5)) +
+  geom_errorbar(mapping = aes(ymin = moyenne - ecart_type,
+                              ymax = moyenne + ecart_type),
+                position = position_dodge(.5))
