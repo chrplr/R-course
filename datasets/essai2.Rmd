@@ -1,0 +1,31 @@
+---
+title: "essai2"
+author: "Christophe Pallier"
+date: "6/13/2019"
+output: html_document
+---
+
+```{r}
+texte = scan('http://www.umich.edu/~umfandsf/other/ebooks/alice30.txt',
+             what=character())
+
+text2 = sapply(texte, function(x) { gsub('[,:!".;\'()*?]', '', x) })
+
+frequences = table(text2)
+
+sort(frequences, decreasing=T)[1:20]
+
+barplot(log10(sort(frequences, decreasing=T)[1:20]))
+
+exclude = c('the', 'he', 'a', 'she', 'and', 'to', 'of')
+
+frequences2 = frequences[!(names(frequences) %in% exclude)]
+
+sort(frequences2, decreasing = T)[1:20]
+
+
+frequences3 = frequences[nchar(names(frequences)) > 2]
+sort(frequences3, decreasing = T)[1:20]
+
+```
+

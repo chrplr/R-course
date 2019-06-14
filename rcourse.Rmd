@@ -195,7 +195,7 @@ barplot(table(replicate(1000, mean(sample(c(0, 0, 1), 10, replace=T)))))
 
 On peut attribuer des _noms_ aux éléments d'un vecteur, qui peuvent servir ensuite à accéder à ces éléments.
 
-```{r}
+```{r exemple-de-noms}
 c(a=1, b=2)
 
     c(nom='dupont', age=34)
@@ -310,10 +310,6 @@ Mais il est assez rare que cela soit nécessaire car on peut appliquer directeme
 - calculer la proportion d'éléments négatifs dans un vecteur.
 - étant donné deux vecteurs de chaines de caractères, retourner combien de chaines sont identiques (et à la même position)  dans les deux vecteurs.
 - Etant donné un fichier texte (par ex. `rcourse.Rmd`), calculer le nombre de mots distinct qu'il contient, et pour chacun de ces mots, sa fréquence d'occurence dans le fichier. 
-- ecrire un programme qui calcule les termes de la suite logistique (voir <https://fr.wikipedia.org/wiki/Suite_logistique>)
-- ecrire un programme qui calcule par test de permutation, la p-value de la différence entre les echantillons c(156, 168, 164, 170, 158, 173) et c(166, 172, 180, 178, 176)
-- ecrire un programme qui affiche le triangle de Pascal
-
 
 #### fonctions portant sur les chaines de charactères
 
@@ -620,8 +616,7 @@ xtabs(len ~ ., data=ToothGrowth)
 
 ## Data.frames
 
-un _data.frame_ n'est rien d'autre qu'une liste de vecteurs qui ont tous la même longueur.
-C'est la représentation « naturelle » pour un tableau de données bidimensionnel (observations en ligne, variables en colonnes).
+un _data.frame_ n'est rien d'autre qu'une liste de vecteurs qui ont tous la même longueur. C'est la représentation « naturelle » pour un tableau de données bidimensionnel (observations en ligne, variables en colonnes).
 
 On peut inspecter un data.frame `df` avec:
 
@@ -647,11 +642,9 @@ df[order(df$data),]
 
 #### importation et exportation de données.
 
-Pour importer des données depuis un fichier texte dans un vecteur, on peut utiliser la fonction `scan()`. Pour le sauver, on utilise `write()`. 
+Pour importer des données depuis un fichier texte dans un vecteur, on peut utiliser la fonction `scan()`. Pour le sauver, on utilise `write()`.  (Remarque: La fonction `readLines()` permet de lire un fichier texte ligne par ligne.)
 
-La fonction `readLines()` permet de lire un fichier texte ligne par ligne.
-
-Pour importer un tableau dans un `data.frame`, à partir d'un fichier texte, on utilise classiquement  les fonctions `read.table()`, `read.csv()`, `read.csv2()`... Les arguments les plus utiles sont `header` et `sep`. Pur les ecrire `write.table()`, `write.csv()`.
+Pour importer un tableau dans un `data.frame`, à partir d'un fichier texte, on utilise classiquement  les fonctions `read.table()`, `read.csv()`, `read.csv2()`... Les arguments les plus utiles sont `header` et `sep`. Pour sauver un data.frame sur le disque: `write.table()` ou `write.csv()`.
 
 Sous Windows, Si on a copié un tableau excel dans le presse-papier, on peut l'importer dans R avec 
 
@@ -695,8 +688,14 @@ Remarques:
   Le résultat est un `tibble` plutôt qu'un `data.frame` (voir <https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html> et plus généralement le package `tidyverse`).
 
 
+Exercice: Etant donné un ensemble de fichiers `data*.csv` dans le repertoire courant, calculer la somme globale de la colonne `value` à travers tous ces fichiers.
 
-Exercice: Etant donné un ensemble de fichiers 'frais*csv' dans le repertoire courant, calculer la somme globale de la colonne 'depenses' à travers tous ces fichiers.
+Pour générer les fichiers:
+```{r}
+for (i in 1:10) {
+  write.csv(data.frame(obs=1:100, value=round(runif(100, 1000, 10000))), sprintf('data%02d.csv', i))
+}
+``` 
 
 
 ### Manipulation des data.frames
@@ -793,7 +792,9 @@ d2 = data.frame(a=2, b=1:2, y=rnorm(6))
 (d3 = rbind(d1, d2))
 ```
 
-Exercice: supposons que vous ayez un répertoire contenant 50 fichiers `data*.csv` ayant le même format. Comment remplir un unique data.frame avec le contenu de tous ces fichiers? 
+Exercice: étant donné un répertoire contenant 10 fichiers `data*.csv` ayant le même format. Comment remplir un unique data.frame avec le contenu de tous ces fichiers? 
+
+
 
 
 #### La fonction merge
@@ -806,29 +807,30 @@ codes = c('ab43', 'cf11', '8a45')
 (tab2 = data.frame(codes, mesure=rnorm(12)))
 (jointable = merge(tab1, tab2))
 ```
+
+
+
+
 ### Reformater des data.frame
 
 * Avec stack et unstack: <https://www.rdocumentation.org/packages/utils/versions/3.6.0/topics/stack>
 
 ```{r}
 data(PlantGrowth)
-names(PlantGrowth)
-formula(PlantGrowth)         # check the default formula
-pg <- unstack(PlantGrowth)   # unstack according to this formula
-pg
-stack(pg)                    # now put it back together
-stack(pg, select = -ctrl)    # omitting one vector
+str(PlantGrowth)
+(pg <- unstack(PlantGrowth, weight ~ group))
+
+stack(pg)                   
+stack(pg, select = -ctrl)   
 ```
 
-
-* <https://garrettgman.github.io/tidying/>
-
-
+Voir également les fonctions `spread()` et `gather()` du package [tidyr](https://tidyr.tidyverse.org) 
+(Tutorial dispo à  <https://garrettgman.github.io/tidying/>)
 
 
 # Fonctions
 
-La syntax pour déclarer une fonction est:
+La syntaxe pour déclarer une fonction est:
 
     name <- function(parameter1, parametre2) <- { body }
 
@@ -843,6 +845,73 @@ myfunc(2, 2)
 myfunc(2)
 ```
 
+Exercice: ecrire une fonction qui etant donné un vecteur `x` et un nombre `n`, renvoit une matrices où les ligne contient les puissances succissve de 1 à n des elements du vecteur x
+
+## timing
+
+Pour évaluer le temps de calcul d'un code R, on peux utiliser `system.time()`
+
+```{r}
+system.time(det(matrix(rnorm(1000*1000), 1000)))
+```
+
+```{r}
+max1 <- function(nreps)
+{
+  sum = 0
+  for (i in 1:nreps)
+  {
+    xy = rnorm(2)
+    sum = sum + max(xy)
+  }
+  return(sum / nreps)
+}
+
+system.time(max1(100000))
+```
+
+Une version sans boucle `for`
+
+```{r}
+max2 <- function(nreps)
+{
+  m = matrix(rnorm(2 * nreps), ncol=2)
+  return(mean(apply(m, 1, max)))
+}
+system.time(max2(100000))
+
+```
+
+Et si on utilise la fonction `pmax()` ("parallel max"):
+
+```{r}
+max3 <- function(nreps)
+{
+  m = matrix(rnorm(2 * nreps), ncol=2)
+  return(mean(pmax(m[,1], m[,2])))
+}
+system.time(max3(100000))
+
+```
+
+
+Pour obtenir plus de détails, utiliser le profiler `Rprof()`
+
+
+
+    Rprof()
+    ...
+      code to profile
+    ...
+    Rprof(NULL)
+    summaryRprof()
+
+
+Exercices:
+
+- ecrire un programme qui calcule les termes de la suite logistique (voir <https://fr.wikipedia.org/wiki/Suite_logistique>)
+- ecrire un programme qui calcule par test de permutation, la p-value de la différence entre les echantillons c(156, 168, 164, 170, 158, 173) et c(166, 172, 180, 178, 176)
+- ecrire une fonction qui affiche les 'n' premiere lignes du triangle de Pascal
 
 
 # Graphiques
@@ -1126,7 +1195,7 @@ data(iris)
 ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(width=0.1, height=0.1)
 ```
 
-### Tutorials and books
+**Tutorials and books on ggplot**
 
 * [Complete ggplot2 tutorial](http://r-statistics.co/Complete-Ggplot2-Tutorial-Part1-With-R-Code.html) de Selva Prabhakaran
 
@@ -1137,7 +1206,7 @@ ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(
 * <https://ggplot2.tidyverse.org/reference/>
 
 
-# Exemples d'utilisation de R
+# Quelques exemples simples d'analyses de données
 
 * [Examples of basic data analyses with R](http://www.pallier.org/examples-of-basic-data-analyses-with-r.html)
 
@@ -1145,7 +1214,8 @@ ggplot(iris, aes(x = Species, y = Petal.Length)) + geom_boxplot() + geom_jitter(
 
 Voir également le document `stats_with_R.Rmd``
 
-# Exercices d'analyse de données
+
+# Exercices d'analyse de données (simples) 
 
 ### Dossier sommeil
 
@@ -1160,7 +1230,7 @@ l'autre des deux médicaments.
 * Données `sommeil.txt`
 
 * Question: Ces données ont été recueillies pour tester l'hypothèse que le
-médicament m2 est plus efficace que le médicament m1. Est-ce le cas ?
+médicament m2 est plus efficace que le médicament m1. Est-ce le cas?
 
 
 ### Dossier pédagogie
@@ -1315,3 +1385,45 @@ More about `ggplot2`:
    * <https://learnr.wordpress.com/2009/08/03/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-part-8/>
 
    * <https://learnr.wordpress.com/2009/08/26/ggplot2-version-of-figures-in-lattice-multivariate-data-visualization-with-r-final-part/>
+
+
+# Solutions des exercices
+
+- créer le vecteur 1 2 2 3 3 3 4 4 4 4 5 5 5 5 5 ... 100
+
+    rep(1:100, 1:100)
+
+
+- calculer la somme des 1000 premiers nombres entiers
+
+    sum(1:1000)
+
+- calculer factorielle de 20
+
+    prod(1:20)
+
+- calculer la proportion d'éléments négatifs dans un vecteur.
+
+     x = rnorm(100)
+     mean(x < 0)
+
+- étant donné deux vecteurs de chaines de caractères, retourner combien de chaines sont identiques (et à la même position)  dans les deux vecteurs.
+
+      v1 = sample(c('a', 'b', 'c'), 100, replace=T)
+      v2 = sample(c('a', 'b', 'c'), 100, replace=T)
+      sum(v1 == v2)
+      
+- Etant donné un fichier texte, calculer le nombre de mots distinct qu'il contient, et pour chacun de ces mots, sa fréquence d'occurence dans le fichier. 
+
+
+    texte = scan('http://www.umich.edu/~umfandsf/other/ebooks/alice30.txt',
+             what=character())
+    text2 = sapply(texte, function(x) { gsub('[,:!".;\'()*?]', '', x) })
+    frequences = table(text2)
+    sort(frequences, decreasing=T)[1:20]
+    barplot(log10(sort(frequences, decreasing=T)[1:20]))
+
+
+
+
+
